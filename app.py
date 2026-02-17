@@ -1,7 +1,9 @@
+import json
 import os
-import sqlite3
 from datetime import datetime
 
+import psycopg2
+import psycopg2.extras
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from groq import Groq
@@ -10,27 +12,28 @@ load_dotenv()
 
 app = Flask(__name__)
 
-DB_PATH = os.environ.get("DB_PATH", "words.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
 def init_db():
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS words (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             english TEXT NOT NULL,
             german TEXT NOT NULL,
             example_sentence TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TIMESTAMP NOT NULL
         )
     """)
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -58,9 +61,7 @@ Respond in EXACTLY this JSON format, no extra text:
         max_tokens=200,
     )
 
-    import json
     text = response.choices[0].message.content.strip()
-    # Extract JSON from the response (handle markdown code blocks)
     if "```" in text:
         text = text.split("```")[1]
         if text.startswith("json"):
@@ -87,12 +88,14 @@ def search():
         return jsonify({"error": f"Translation failed: {str(e)}"}), 500
 
     conn = get_db()
-    conn.execute(
-        "INSERT INTO words (english, german, example_sentence, created_at) VALUES (?, ?, ?, ?)",
-        (result["english"], result["german"], result["example_sentence"], datetime.utcnow().isoformat()),
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO words (english, german, example_sentence, created_at) VALUES (%s, %s, %s, %s) RETURNING id",
+        (result["english"], result["german"], result["example_sentence"], datetime.utcnow()),
     )
+    word_id = cur.fetchone()[0]
     conn.commit()
-    word_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    cur.close()
     conn.close()
 
     result["id"] = word_id
@@ -103,16 +106,24 @@ def search():
 @app.route("/api/words")
 def get_words():
     conn = get_db()
-    rows = conn.execute("SELECT * FROM words ORDER BY created_at DESC").fetchall()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM words ORDER BY created_at DESC")
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
-    return jsonify([dict(row) for row in rows])
+    # Convert datetime to string for JSON serialization
+    for row in rows:
+        row["created_at"] = row["created_at"].isoformat()
+    return jsonify(rows)
 
 
 @app.route("/api/words/<int:word_id>", methods=["DELETE"])
 def delete_word(word_id):
     conn = get_db()
-    conn.execute("DELETE FROM words WHERE id = ?", (word_id,))
+    cur = conn.cursor()
+    cur.execute("DELETE FROM words WHERE id = %s", (word_id,))
     conn.commit()
+    cur.close()
     conn.close()
     return jsonify({"ok": True})
 
