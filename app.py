@@ -84,23 +84,22 @@ def login_required(f):
 
 
 def translate_word(word):
-    prompt = f"""You are a German-English dictionary assistant.
+    prompt = f"""You are a professional German-English dictionary. You must format entries exactly like a real dictionary.
 
 Given the word: "{word}"
 
-1. Detect if it's English or German.
-2. Provide the translation (English→German or German→English).
-3. Determine the word type (noun, verb, adjective, adverb, preposition, etc.).
-4. If it's a NOUN: provide the German article (der/die/das) and the plural form.
-5. If it's a VERB: provide the Präteritum and Partizip II forms (e.g. "ging, gegangen").
-6. Provide an example sentence IN GERMAN using the German word.
-7. Provide the English translation of that example sentence.
+Rules:
+- Detect if it's English or German and translate accordingly.
+- The "german" field must ALWAYS use proper German spelling: nouns are CAPITALIZED (Blume, Hund, Tisch), everything else lowercase.
+- word_type must be one of: "noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "particle", "interjection", "numeral", "phrase"
+- For NOUNS: always include the article (der/die/das) in gender_article, and the plural form (capitalized, e.g. "Blumen"). The "german" field should be just the noun capitalized (e.g. "Blume" not "blume" or "die Blume").
+- For VERBS: provide Präteritum and Partizip II in verb_forms (e.g. "ging, ist gegangen"). Use the infinitive form in "german" (e.g. "gehen").
+- For all other types: set gender_article, plural, and verb_forms to null.
+- example_sentence: a natural German sentence using the word.
+- sentence_translation: English translation of that sentence.
 
 Respond in EXACTLY this JSON format, no extra text:
-{{"english": "the english word", "german": "the german word", "word_type": "noun", "gender_article": "der/die/das or null", "plural": "plural form or null", "verb_forms": "Präteritum, Partizip II or null", "example_sentence": "German sentence", "sentence_translation": "English translation of the sentence"}}
-
-For non-nouns, set gender_article and plural to null.
-For non-verbs, set verb_forms to null."""
+{{"english": "flower", "german": "Blume", "word_type": "noun", "gender_article": "die", "plural": "Blumen", "verb_forms": null, "example_sentence": "Die Blumen im Garten blühen wunderschön.", "sentence_translation": "The flowers in the garden bloom beautifully."}}"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",

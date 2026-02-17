@@ -3,99 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - German Vocab Tutor</title>
+    <title>Register - Wortschatz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f0f2f5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f7f6f3;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
         .auth-card {
             background: white;
-            border-radius: 12px;
-            padding: 40px;
+            border-radius: 16px;
+            padding: 44px 40px;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8e6e1;
         }
-        .auth-card h1 {
+        .brand {
+            font-family: 'Source Serif 4', Georgia, serif;
             font-size: 1.6rem;
-            margin-bottom: 4px;
+            font-weight: 700;
             color: #1a1a2e;
+            margin-bottom: 4px;
         }
-        .auth-card .subtitle {
-            color: #888;
-            margin-bottom: 28px;
-            font-size: 0.95rem;
+        .brand span { color: #f0c040; }
+        .subtitle {
+            color: #999;
+            margin-bottom: 32px;
+            font-size: 0.9rem;
         }
-        .form-group {
-            margin-bottom: 16px;
-        }
+        .form-group { margin-bottom: 18px; }
         .form-group label {
             display: block;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #555;
+            color: #888;
             margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
         .form-group input {
             width: 100%;
-            padding: 10px 14px;
+            padding: 12px 16px;
             font-size: 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border: 2px solid #e8e6e1;
+            border-radius: 10px;
             outline: none;
             transition: border-color 0.2s;
+            background: #fafaf8;
         }
-        .form-group input:focus {
-            border-color: #4a90d9;
-        }
+        .form-group input:focus { border-color: #1a1a2e; background: #fff; }
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 13px;
             font-size: 1rem;
             font-weight: 600;
-            background: #4a90d9;
+            background: #1a1a2e;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: background 0.2s;
             margin-top: 8px;
         }
-        .btn:hover { background: #357abd; }
-        .btn:disabled { background: #aaa; cursor: not-allowed; }
+        .btn:hover { background: #2d2d4e; }
+        .btn:disabled { background: #bbb; cursor: not-allowed; }
         .error-msg {
-            color: #d32f2f;
-            background: #ffeaea;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
+            color: #c0392b;
+            background: #fdf0ef;
+            border: 1px solid #f5c6c0;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            margin-bottom: 14px;
             display: none;
         }
         .link {
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #888;
+            margin-top: 22px;
+            font-size: 0.88rem;
+            color: #999;
         }
-        .link a {
-            color: #4a90d9;
-            text-decoration: none;
-            font-weight: 600;
-        }
+        .link a { color: #1a1a2e; text-decoration: none; font-weight: 600; }
         .link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="auth-card">
-        <h1>Create account</h1>
-        <p class="subtitle">Start building your German vocabulary</p>
+        <div class="brand">Wort<span>schatz</span></div>
+        <p class="subtitle">Create your dictionary</p>
         <div class="error-msg" id="error"></div>
         <div class="form-group">
             <label>Username</label>

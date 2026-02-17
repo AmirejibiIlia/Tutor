@@ -4,100 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>German Vocab Tutor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f0f2f5;
-            color: #333;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f7f6f3;
+            color: #2d2d2d;
             min-height: 100vh;
         }
 
         /* Nav */
         .nav {
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 14px 24px;
+            background: #1a1a2e;
+            padding: 16px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         .nav .brand {
-            font-size: 1.2rem;
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.3rem;
             font-weight: 700;
-            color: #1a1a2e;
+            color: #fff;
+            letter-spacing: -0.3px;
         }
+        .nav .brand span { color: #f0c040; }
         .nav .user-info {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 0.9rem;
-            color: #666;
+            gap: 14px;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.7);
         }
         .nav .logout-btn {
-            padding: 6px 14px;
-            font-size: 0.85rem;
-            background: #f0f0f0;
-            border: none;
+            padding: 6px 16px;
+            font-size: 0.82rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
             border-radius: 6px;
             cursor: pointer;
-            color: #555;
-            transition: background 0.2s;
+            color: rgba(255,255,255,0.8);
+            transition: all 0.2s;
         }
-        .nav .logout-btn:hover { background: #e0e0e0; }
+        .nav .logout-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 
         /* Layout */
         .layout {
             display: flex;
-            max-width: 960px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 24px 20px;
-            gap: 24px;
+            padding: 28px 24px;
+            gap: 28px;
         }
 
         /* Sidebar */
         .sidebar {
-            width: 180px;
+            width: 190px;
             flex-shrink: 0;
         }
-        .sidebar h3 {
-            font-size: 0.8rem;
+        .sidebar-title {
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: #999;
             margin-bottom: 10px;
+            font-weight: 600;
         }
         .filter-btn {
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            padding: 10px 14px;
-            font-size: 0.9rem;
-            background: white;
+            padding: 9px 14px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            background: transparent;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 4px;
-            color: #555;
-            transition: background 0.15s, color 0.15s;
+            margin-bottom: 2px;
+            color: #666;
+            transition: all 0.15s;
         }
-        .filter-btn:hover { background: #e8ecf0; }
+        .filter-btn:hover { background: #edecea; color: #333; }
         .filter-btn.active {
-            background: #4a90d9;
-            color: white;
+            background: #1a1a2e;
+            color: #fff;
         }
         .filter-btn .count {
-            font-size: 0.8rem;
-            opacity: 0.7;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            font-weight: 400;
+        }
+        .filter-btn .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .filter-btn .label-group {
+            display: flex;
+            align-items: center;
         }
 
-        /* Mobile filter pills (hidden on desktop) */
+        /* Mobile filter pills */
         .filter-pills {
             display: none;
             overflow-x: auto;
-            gap: 8px;
+            gap: 6px;
             padding-bottom: 4px;
             margin-bottom: 16px;
             -webkit-overflow-scrolling: touch;
@@ -105,77 +123,89 @@
         .filter-pills::-webkit-scrollbar { display: none; }
         .pill-btn {
             flex-shrink: 0;
-            padding: 8px 16px;
-            font-size: 0.85rem;
+            padding: 7px 14px;
+            font-size: 0.82rem;
+            font-weight: 500;
             background: white;
-            border: none;
+            border: 1px solid #e0ddd8;
             border-radius: 20px;
             cursor: pointer;
-            color: #555;
+            color: #666;
             white-space: nowrap;
-            transition: background 0.15s, color 0.15s;
+            transition: all 0.15s;
         }
-        .pill-btn:hover { background: #e8ecf0; }
+        .pill-btn:hover { border-color: #999; color: #333; }
         .pill-btn.active {
-            background: #4a90d9;
-            color: white;
+            background: #1a1a2e;
+            color: #fff;
+            border-color: #1a1a2e;
         }
 
-        /* Main content */
-        .main {
-            flex: 1;
-            min-width: 0;
-        }
+        /* Main */
+        .main { flex: 1; min-width: 0; }
 
         .search-section {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border-radius: 14px;
+            padding: 24px;
+            border: 1px solid #e8e6e1;
             margin-bottom: 24px;
+        }
+        .search-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
         }
         .search-box {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
         .search-box input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 13px 18px;
             font-size: 1rem;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            font-family: 'Source Serif 4', Georgia, serif;
+            border: 2px solid #e8e6e1;
+            border-radius: 10px;
             outline: none;
             transition: border-color 0.2s;
+            background: #fafaf8;
         }
-        .search-box input:focus { border-color: #4a90d9; }
+        .search-box input:focus { border-color: #1a1a2e; background: #fff; }
+        .search-box input::placeholder { color: #bbb; }
         .search-box button {
-            padding: 12px 24px;
-            font-size: 1rem;
+            padding: 13px 28px;
+            font-size: 0.95rem;
             font-weight: 600;
-            background: #4a90d9;
+            background: #1a1a2e;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: background 0.2s;
             white-space: nowrap;
         }
-        .search-box button:hover { background: #357abd; }
-        .search-box button:disabled { background: #aaa; cursor: not-allowed; }
+        .search-box button:hover { background: #2d2d4e; }
+        .search-box button:disabled { background: #bbb; cursor: not-allowed; }
 
         .loading {
             text-align: center;
             padding: 16px;
-            color: #888;
+            color: #999;
+            font-size: 0.9rem;
             display: none;
         }
         .error {
             padding: 10px 14px;
-            color: #d32f2f;
-            background: #ffeaea;
+            color: #c0392b;
+            background: #fdf0ef;
+            border: 1px solid #f5c6c0;
             border-radius: 8px;
             margin-top: 12px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             display: none;
         }
 
@@ -187,103 +217,137 @@
             margin-bottom: 14px;
         }
         .words-header h2 {
-            font-size: 1.1rem;
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.15rem;
+            font-weight: 700;
             color: #1a1a2e;
         }
         .word-count {
-            color: #999;
-            font-size: 0.85rem;
+            color: #aaa;
+            font-size: 0.82rem;
         }
 
-        /* Word card */
+        /* Word card — dictionary style */
         .word-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border-radius: 14px;
+            padding: 22px 26px;
+            margin-bottom: 14px;
+            border: 1px solid #e8e6e1;
             position: relative;
+            transition: box-shadow 0.2s;
         }
-        .word-card .top-row {
+        .word-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .word-card .entry-header {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 10px;
-            margin-bottom: 6px;
             flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+        .word-card .headword {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .word-card .article {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: #7c6f5b;
+        }
+        .word-card .grammar-info {
+            font-size: 0.85rem;
+            color: #999;
+            font-style: italic;
         }
         .word-card .badge {
             display: inline-block;
             padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .badge-noun { background: #e3f2fd; color: #1565c0; }
-        .badge-verb { background: #e8f5e9; color: #2e7d32; }
-        .badge-adjective { background: #fff3e0; color: #e65100; }
-        .badge-adverb { background: #f3e5f5; color: #7b1fa2; }
-        .badge-other { background: #f5f5f5; color: #666; }
-
-        .word-card .german-main {
-            font-size: 1.25rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: 700;
-            color: #1a1a2e;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
-        .word-card .article { color: #4a90d9; }
-        .word-card .plural {
+        .badge-noun { background: #eef3ff; color: #3b5998; }
+        .badge-verb { background: #eefbf0; color: #27713a; }
+        .badge-adjective { background: #fff8ee; color: #b5651d; }
+        .badge-adverb { background: #f5eefb; color: #6b3fa0; }
+        .badge-preposition { background: #fef3f0; color: #c0392b; }
+        .badge-conjunction { background: #f0fefe; color: #1a8a8a; }
+        .badge-pronoun { background: #fdf5e6; color: #8b6914; }
+        .badge-particle { background: #f0f0f0; color: #555; }
+        .badge-other { background: #f0f0f0; color: #777; }
+
+        .dot-noun { background: #3b5998; }
+        .dot-verb { background: #27713a; }
+        .dot-adjective { background: #b5651d; }
+        .dot-adverb { background: #6b3fa0; }
+        .dot-preposition { background: #c0392b; }
+        .dot-conjunction { background: #1a8a8a; }
+        .dot-pronoun { background: #8b6914; }
+        .dot-particle { background: #555; }
+        .dot-other { background: #999; }
+
+        .word-card .verb-line {
+            font-family: 'Source Serif 4', Georgia, serif;
             font-size: 0.95rem;
-            color: #888;
-            font-weight: 400;
-        }
-        .word-card .verb-forms {
-            font-size: 0.9rem;
             color: #666;
-            margin-top: 2px;
+            margin: 4px 0;
+            font-style: italic;
         }
-        .word-card .english-line {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 10px;
+
+        .word-card .translation {
+            font-size: 1.05rem;
+            color: #555;
+            margin: 8px 0;
+            padding-left: 2px;
         }
-        .word-card .sentence-block {
-            background: #fafafa;
-            border-left: 3px solid #4a90d9;
-            padding: 10px 14px;
-            border-radius: 0 6px 6px 0;
-            margin-top: 10px;
+
+        .word-card .example {
+            background: #fafaf8;
+            border-left: 3px solid #d4c9a8;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 12px;
         }
-        .word-card .sentence-de {
+        .word-card .example-de {
+            font-family: 'Source Serif 4', Georgia, serif;
             font-size: 0.95rem;
             font-weight: 500;
-            color: #333;
+            color: #2d2d2d;
             margin-bottom: 4px;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        .word-card .sentence-en {
+        .word-card .example-en {
             font-size: 0.88rem;
-            color: #888;
+            color: #999;
             font-style: italic;
         }
+
         .word-card .delete-btn {
             position: absolute;
-            top: 14px;
-            right: 14px;
+            top: 16px;
+            right: 16px;
             background: none;
             border: none;
-            color: #ccc;
+            color: #d0cdc6;
             cursor: pointer;
             font-size: 1.3rem;
             padding: 4px 8px;
             border-radius: 4px;
-            transition: color 0.2s, background 0.2s;
+            transition: all 0.2s;
         }
         .word-card .delete-btn:hover {
-            color: #d32f2f;
-            background: #ffeaea;
+            color: #c0392b;
+            background: #fdf0ef;
         }
 
         /* Speaker button */
@@ -291,28 +355,63 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1rem;
-            color: #4a90d9;
-            padding: 2px 4px;
+            font-size: 0.95rem;
+            color: #7c6f5b;
+            padding: 2px 5px;
             border-radius: 4px;
-            transition: background 0.15s;
+            transition: all 0.15s;
             vertical-align: middle;
         }
-        .speak-btn:hover { background: #e3f2fd; }
+        .speak-btn:hover { background: #f0ece4; color: #4a3f2f; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 20px;
+            padding-bottom: 20px;
+        }
+        .page-btn {
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            background: white;
+            border: 1px solid #e0ddd8;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.15s;
+        }
+        .page-btn:hover { border-color: #999; color: #1a1a2e; }
+        .page-btn.active {
+            background: #1a1a2e;
+            color: white;
+            border-color: #1a1a2e;
+        }
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-size: 0.82rem;
+            color: #aaa;
+            padding: 0 8px;
+        }
 
         .empty-state {
             text-align: center;
             color: #bbb;
             padding: 60px 20px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            font-style: italic;
         }
 
         /* Responsive */
-        @media (max-width: 680px) {
-            .nav {
-                padding: 12px 16px;
-            }
-            .nav .brand { font-size: 1.05rem; }
+        @media (max-width: 700px) {
+            .nav { padding: 12px 16px; }
+            .nav .brand { font-size: 1.1rem; }
 
             .layout {
                 flex-direction: column;
@@ -323,25 +422,22 @@
             .sidebar { display: none; }
             .filter-pills { display: flex; }
 
-            .search-section { padding: 16px; }
-            .search-box {
-                flex-direction: column;
-            }
-            .search-box button {
-                padding: 12px;
-            }
+            .search-section { padding: 18px; border-radius: 12px; }
+            .search-box { flex-direction: column; }
+            .search-box button { padding: 13px; }
 
             .word-card {
-                padding: 16px;
-                border-radius: 10px;
+                padding: 18px;
+                border-radius: 12px;
             }
-            .word-card .german-main { font-size: 1.1rem; }
+            .word-card .headword { font-size: 1.2rem; }
+            .word-card .article { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
     <div class="nav">
-        <div class="brand">German Vocab Tutor</div>
+        <div class="brand">Wort<span>schatz</span></div>
         <div class="user-info">
             <span id="usernameDisplay"></span>
             <button class="logout-btn" onclick="doLogout()">Log out</button>
@@ -353,21 +449,23 @@
 
         <div class="main">
             <div class="search-section">
+                <div class="search-label">Look up a word</div>
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Type a word in English or German..." autofocus>
-                    <button id="searchBtn" onclick="searchWord()">Search</button>
+                    <input type="text" id="searchInput" placeholder="English or German..." autofocus>
+                    <button id="searchBtn" onclick="searchWord()">Translate</button>
                 </div>
                 <div class="error" id="error"></div>
-                <div class="loading" id="loading">Translating...</div>
+                <div class="loading" id="loading">Looking up...</div>
             </div>
 
             <div class="filter-pills" id="filterPills"></div>
 
             <div class="words-header">
-                <h2>My Vocabulary</h2>
+                <h2>My Dictionary</h2>
                 <span class="word-count" id="wordCount"></span>
             </div>
             <div id="wordList"></div>
+            <div class="pagination" id="pagination"></div>
         </div>
     </div>
 
@@ -380,11 +478,25 @@
         const wordCount = document.getElementById('wordCount');
         const sidebar = document.getElementById('sidebar');
         const filterPills = document.getElementById('filterPills');
+        const pagination = document.getElementById('pagination');
 
         let allWords = [];
         let activeFilter = 'all';
+        let currentPage = 1;
+        const PER_PAGE = 10;
 
-        // Load username
+        const TYPE_META = {
+            noun:        { label: 'Nouns',        dot: 'dot-noun',        badge: 'badge-noun' },
+            verb:        { label: 'Verbs',        dot: 'dot-verb',        badge: 'badge-verb' },
+            adjective:   { label: 'Adjectives',   dot: 'dot-adjective',   badge: 'badge-adjective' },
+            adverb:      { label: 'Adverbs',      dot: 'dot-adverb',      badge: 'badge-adverb' },
+            preposition: { label: 'Prepositions', dot: 'dot-preposition', badge: 'badge-preposition' },
+            conjunction: { label: 'Conjunctions', dot: 'dot-conjunction', badge: 'badge-conjunction' },
+            pronoun:     { label: 'Pronouns',     dot: 'dot-pronoun',     badge: 'badge-pronoun' },
+            particle:    { label: 'Particles',    dot: 'dot-particle',    badge: 'badge-particle' },
+            other:       { label: 'Other',        dot: 'dot-other',       badge: 'badge-other' },
+        };
+
         fetch('/api/me').then(r => r.json()).then(data => {
             if (data.logged_in) {
                 document.getElementById('usernameDisplay').textContent = data.username;
@@ -427,6 +539,7 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Search failed');
                 searchInput.value = '';
+                currentPage = 1;
                 loadWords();
             } catch (err) {
                 error.textContent = err.message;
@@ -446,14 +559,21 @@
         function normalizeType(type) {
             if (!type) return 'other';
             const t = type.toLowerCase();
-            if (['noun', 'verb', 'adjective', 'adverb'].includes(t)) return t;
+            if (TYPE_META[t]) return t;
             return 'other';
         }
 
         function setFilter(type) {
             activeFilter = type;
+            currentPage = 1;
             renderFilters();
             renderWords();
+        }
+
+        function setPage(p) {
+            currentPage = p;
+            renderWords();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderFilters() {
@@ -463,58 +583,27 @@
                 counts[t] = (counts[t] || 0) + 1;
             });
 
-            const types = [
-                ['all', 'All'],
-                ['noun', 'Nouns'],
-                ['verb', 'Verbs'],
-                ['adjective', 'Adjectives'],
-                ['adverb', 'Adverbs'],
-                ['other', 'Other'],
-            ].filter(([key]) => key === 'all' || counts[key]);
+            const types = [['all', 'All', '']].concat(
+                Object.entries(TYPE_META)
+                    .filter(([key]) => counts[key])
+                    .map(([key, meta]) => [key, meta.label, meta.dot])
+            );
 
-            // Desktop sidebar
-            sidebar.innerHTML = '<h3>Filter</h3>' + types.map(([key, label]) => `
+            sidebar.innerHTML = '<div class="sidebar-title">Filter by type</div>' + types.map(([key, label, dot]) => `
                 <button class="filter-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
-                    <span>${label}</span>
+                    <span class="label-group">
+                        ${dot ? `<span class="dot ${dot}"></span>` : ''}
+                        ${label}
+                    </span>
                     <span class="count">${counts[key] || 0}</span>
                 </button>
             `).join('');
 
-            // Mobile pills
             filterPills.innerHTML = types.map(([key, label]) => `
                 <button class="pill-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
-                    ${label} (${counts[key] || 0})
+                    ${label} ${counts[key] || 0}
                 </button>
             `).join('');
-        }
-
-        function badgeClass(type) {
-            const t = normalizeType(type);
-            if (t === 'noun') return 'badge-noun';
-            if (t === 'verb') return 'badge-verb';
-            if (t === 'adjective') return 'badge-adjective';
-            if (t === 'adverb') return 'badge-adverb';
-            return 'badge-other';
-        }
-
-        function renderGerman(w) {
-            const type = (w.word_type || '').toLowerCase();
-            let html = '';
-            if (type === 'noun' && w.gender_article) {
-                html += `<span class="article">${esc(w.gender_article)}</span> `;
-                html += `<span class="german-main">${esc(w.german)}</span>`;
-                if (w.plural) {
-                    html += ` <span class="plural">(die ${esc(w.plural)})</span>`;
-                }
-            } else {
-                html += `<span class="german-main">${esc(w.german)}</span>`;
-            }
-            return html;
-        }
-
-        function renderVerbForms(w) {
-            if ((w.word_type || '').toLowerCase() !== 'verb' || !w.verb_forms) return '';
-            return `<div class="verb-forms">${esc(w.german)} &mdash; ${esc(w.verb_forms)}</div>`;
         }
 
         function renderWords() {
@@ -522,36 +611,82 @@
                 ? allWords
                 : allWords.filter(w => normalizeType(w.word_type) === activeFilter);
 
-            wordCount.textContent = filtered.length ? `${filtered.length} word${filtered.length !== 1 ? 's' : ''}` : '';
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
 
-            if (!filtered.length) {
+            const start = (currentPage - 1) * PER_PAGE;
+            const pageWords = filtered.slice(start, start + PER_PAGE);
+
+            wordCount.textContent = filtered.length ? `${filtered.length} entr${filtered.length !== 1 ? 'ies' : 'y'}` : '';
+
+            if (!pageWords.length) {
                 wordList.innerHTML = allWords.length
-                    ? '<div class="empty-state">No words match this filter.</div>'
-                    : '<div class="empty-state">No words yet. Search for a word to start building your vocabulary!</div>';
+                    ? '<div class="empty-state">No entries match this filter.</div>'
+                    : '<div class="empty-state">Your dictionary is empty. Look up a word to begin.</div>';
+                pagination.innerHTML = '';
                 return;
             }
 
-            wordList.innerHTML = filtered.map(w => {
-                const germanText = w.gender_article ? `${w.gender_article} ${w.german}` : w.german;
+            wordList.innerHTML = pageWords.map(w => {
+                const type = normalizeType(w.word_type);
+                const meta = TYPE_META[type] || TYPE_META.other;
+                const germanSpoken = w.gender_article ? `${w.gender_article} ${w.german}` : w.german;
+
+                let headerHtml = '';
+                if (type === 'noun' && w.gender_article) {
+                    headerHtml = `
+                        <span class="article">${esc(w.gender_article)}</span>
+                        <span class="headword">${esc(w.german)}</span>
+                        <button class="speak-btn" onclick="speak('${escAttr(germanSpoken)}')" title="Listen">&#128264;</button>
+                        <span class="grammar-info">Pl. die ${esc(w.plural || '—')}</span>
+                    `;
+                } else {
+                    headerHtml = `
+                        <span class="headword">${esc(w.german)}</span>
+                        <button class="speak-btn" onclick="speak('${escAttr(w.german)}')" title="Listen">&#128264;</button>
+                    `;
+                }
+
+                let verbHtml = '';
+                if (type === 'verb' && w.verb_forms) {
+                    verbHtml = `<div class="verb-line">${esc(w.german)} &mdash; ${esc(w.verb_forms)}</div>`;
+                }
+
                 return `
                 <div class="word-card">
-                    <button class="delete-btn" onclick="deleteWord(${w.id})" title="Delete">&times;</button>
-                    <div class="top-row">
-                        <span class="badge ${badgeClass(w.word_type)}">${esc(w.word_type || 'word')}</span>
-                        ${renderGerman(w)}
-                        <button class="speak-btn" onclick="speak('${esc(germanText)}')" title="Listen">&#128264;</button>
+                    <button class="delete-btn" onclick="deleteWord(${w.id})" title="Remove">&times;</button>
+                    <div class="entry-header">
+                        <span class="badge ${meta.badge}">${esc(w.word_type || 'word')}</span>
+                        ${headerHtml}
                     </div>
-                    ${renderVerbForms(w)}
-                    <div class="english-line">${esc(w.english)}</div>
-                    <div class="sentence-block">
-                        <div class="sentence-de">
+                    ${verbHtml}
+                    <div class="translation">${esc(w.english)}</div>
+                    <div class="example">
+                        <div class="example-de">
                             ${esc(w.example_sentence)}
-                            <button class="speak-btn" onclick="speak('${esc(w.example_sentence)}')" title="Listen to sentence">&#128264;</button>
+                            <button class="speak-btn" onclick="speak('${escAttr(w.example_sentence)}')" title="Listen">&#128264;</button>
                         </div>
-                        ${w.sentence_translation ? `<div class="sentence-en">${esc(w.sentence_translation)}</div>` : ''}
+                        ${w.sentence_translation ? `<div class="example-en">${esc(w.sentence_translation)}</div>` : ''}
                     </div>
                 </div>
-            `}).join('');
+                `;
+            }).join('');
+
+            // Pagination
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            let pagHtml = `<button class="page-btn" onclick="setPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+                    if (i === 3 || i === totalPages - 2) pagHtml += '<span class="page-info">...</span>';
+                    continue;
+                }
+                pagHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="setPage(${i})">${i}</button>`;
+            }
+            pagHtml += `<button class="page-btn" onclick="setPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
+            pagination.innerHTML = pagHtml;
         }
 
         async function loadWords() {
@@ -570,6 +705,11 @@
             const d = document.createElement('div');
             d.textContent = str;
             return d.innerHTML;
+        }
+
+        function escAttr(str) {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         }
 
         loadWords();
