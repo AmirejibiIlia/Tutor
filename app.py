@@ -160,6 +160,7 @@ def register():
             "INSERT INTO users (username, password_hash, created_at) VALUES (%s, %s, %s) RETURNING id",
             (username, password_hash, datetime.utcnow()),
         )
+        user_id = cur.fetchone()[0]
         conn.commit()
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
@@ -168,7 +169,10 @@ def register():
         return jsonify({"error": "Username already taken"}), 409
     cur.close()
     conn.close()
-    return jsonify({"ok": True})
+
+    session["user_id"] = user_id
+    session["username"] = username
+    return jsonify({"ok": True, "username": username})
 
 
 @app.route("/api/login", methods=["POST"])

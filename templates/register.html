@@ -147,7 +147,7 @@
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
-                window.location.href = '/login';
+                window.location.href = '/';
             } catch (err) {
                 error.textContent = err.message;
                 error.style.display = 'block';

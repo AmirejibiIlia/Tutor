@@ -47,24 +47,92 @@
         }
         .nav .logout-btn:hover { background: #e0e0e0; }
 
-        /* Main content */
-        .container {
-            max-width: 720px;
+        /* Layout */
+        .layout {
+            display: flex;
+            max-width: 960px;
             margin: 0 auto;
-            padding: 32px 20px;
+            padding: 24px 20px;
+            gap: 24px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 180px;
+            flex-shrink: 0;
+        }
+        .sidebar h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            color: #555;
+            transition: background 0.15s, color 0.15s;
+        }
+        .filter-btn:hover { background: #e8ecf0; }
+        .filter-btn.active {
+            background: #4a90d9;
+            color: white;
+        }
+        .filter-btn .count {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Mobile filter pills (hidden on desktop) */
+        .filter-pills {
+            display: none;
+            overflow-x: auto;
+            gap: 8px;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .filter-pills::-webkit-scrollbar { display: none; }
+        .pill-btn {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            background: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            color: #555;
+            white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .pill-btn:hover { background: #e8ecf0; }
+        .pill-btn.active {
+            background: #4a90d9;
+            color: white;
+        }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            min-width: 0;
         }
 
         .search-section {
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            margin-bottom: 28px;
-        }
-        .search-section h2 {
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            color: #1a1a2e;
+            margin-bottom: 24px;
         }
         .search-box {
             display: flex;
@@ -90,6 +158,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
+            white-space: nowrap;
         }
         .search-box button:hover { background: #357abd; }
         .search-box button:disabled { background: #aaa; cursor: not-allowed; }
@@ -110,7 +179,7 @@
             display: none;
         }
 
-        /* Word list */
+        /* Words header */
         .words-header {
             display: flex;
             align-items: baseline;
@@ -162,9 +231,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        .word-card .article {
-            color: #4a90d9;
-        }
+        .word-card .article { color: #4a90d9; }
         .word-card .plural {
             font-size: 0.95rem;
             color: #888;
@@ -192,6 +259,9 @@
             font-weight: 500;
             color: #333;
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .word-card .sentence-en {
             font-size: 0.88rem;
@@ -216,11 +286,56 @@
             background: #ffeaea;
         }
 
+        /* Speaker button */
+        .speak-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #4a90d9;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.15s;
+            vertical-align: middle;
+        }
+        .speak-btn:hover { background: #e3f2fd; }
+
         .empty-state {
             text-align: center;
             color: #bbb;
             padding: 60px 20px;
             font-size: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 680px) {
+            .nav {
+                padding: 12px 16px;
+            }
+            .nav .brand { font-size: 1.05rem; }
+
+            .layout {
+                flex-direction: column;
+                padding: 16px 12px;
+                gap: 0;
+            }
+
+            .sidebar { display: none; }
+            .filter-pills { display: flex; }
+
+            .search-section { padding: 16px; }
+            .search-box {
+                flex-direction: column;
+            }
+            .search-box button {
+                padding: 12px;
+            }
+
+            .word-card {
+                padding: 16px;
+                border-radius: 10px;
+            }
+            .word-card .german-main { font-size: 1.1rem; }
         }
     </style>
 </head>
@@ -233,22 +348,27 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="search-section">
-            <h2>Look up a word</h2>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Type a word in English or German..." autofocus>
-                <button id="searchBtn" onclick="searchWord()">Search</button>
-            </div>
-            <div class="error" id="error"></div>
-            <div class="loading" id="loading">Translating...</div>
-        </div>
+    <div class="layout">
+        <div class="sidebar" id="sidebar"></div>
 
-        <div class="words-header">
-            <h2>My Vocabulary</h2>
-            <span class="word-count" id="wordCount"></span>
+        <div class="main">
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Type a word in English or German..." autofocus>
+                    <button id="searchBtn" onclick="searchWord()">Search</button>
+                </div>
+                <div class="error" id="error"></div>
+                <div class="loading" id="loading">Translating...</div>
+            </div>
+
+            <div class="filter-pills" id="filterPills"></div>
+
+            <div class="words-header">
+                <h2>My Vocabulary</h2>
+                <span class="word-count" id="wordCount"></span>
+            </div>
+            <div id="wordList"></div>
         </div>
-        <div id="wordList"></div>
     </div>
 
     <script>
@@ -258,6 +378,11 @@
         const error = document.getElementById('error');
         const wordList = document.getElementById('wordList');
         const wordCount = document.getElementById('wordCount');
+        const sidebar = document.getElementById('sidebar');
+        const filterPills = document.getElementById('filterPills');
+
+        let allWords = [];
+        let activeFilter = 'all';
 
         // Load username
         fetch('/api/me').then(r => r.json()).then(data => {
@@ -275,6 +400,14 @@
         async function doLogout() {
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/login';
+        }
+
+        function speak(text, lang) {
+            speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = lang || 'de-DE';
+            utter.rate = 0.9;
+            speechSynthesis.speak(utter);
         }
 
         async function searchWord() {
@@ -310,9 +443,53 @@
             loadWords();
         }
 
-        function badgeClass(type) {
-            if (!type) return 'badge-other';
+        function normalizeType(type) {
+            if (!type) return 'other';
             const t = type.toLowerCase();
+            if (['noun', 'verb', 'adjective', 'adverb'].includes(t)) return t;
+            return 'other';
+        }
+
+        function setFilter(type) {
+            activeFilter = type;
+            renderFilters();
+            renderWords();
+        }
+
+        function renderFilters() {
+            const counts = { all: allWords.length };
+            allWords.forEach(w => {
+                const t = normalizeType(w.word_type);
+                counts[t] = (counts[t] || 0) + 1;
+            });
+
+            const types = [
+                ['all', 'All'],
+                ['noun', 'Nouns'],
+                ['verb', 'Verbs'],
+                ['adjective', 'Adjectives'],
+                ['adverb', 'Adverbs'],
+                ['other', 'Other'],
+            ].filter(([key]) => key === 'all' || counts[key]);
+
+            // Desktop sidebar
+            sidebar.innerHTML = '<h3>Filter</h3>' + types.map(([key, label]) => `
+                <button class="filter-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
+                    <span>${label}</span>
+                    <span class="count">${counts[key] || 0}</span>
+                </button>
+            `).join('');
+
+            // Mobile pills
+            filterPills.innerHTML = types.map(([key, label]) => `
+                <button class="pill-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
+                    ${label} (${counts[key] || 0})
+                </button>
+            `).join('');
+        }
+
+        function badgeClass(type) {
+            const t = normalizeType(type);
             if (t === 'noun') return 'badge-noun';
             if (t === 'verb') return 'badge-verb';
             if (t === 'adjective') return 'badge-adjective';
@@ -323,7 +500,6 @@
         function renderGerman(w) {
             const type = (w.word_type || '').toLowerCase();
             let html = '';
-
             if (type === 'noun' && w.gender_article) {
                 html += `<span class="article">${esc(w.gender_article)}</span> `;
                 html += `<span class="german-main">${esc(w.german)}</span>`;
@@ -333,7 +509,6 @@
             } else {
                 html += `<span class="german-main">${esc(w.german)}</span>`;
             }
-
             return html;
         }
 
@@ -342,33 +517,49 @@
             return `<div class="verb-forms">${esc(w.german)} &mdash; ${esc(w.verb_forms)}</div>`;
         }
 
+        function renderWords() {
+            const filtered = activeFilter === 'all'
+                ? allWords
+                : allWords.filter(w => normalizeType(w.word_type) === activeFilter);
+
+            wordCount.textContent = filtered.length ? `${filtered.length} word${filtered.length !== 1 ? 's' : ''}` : '';
+
+            if (!filtered.length) {
+                wordList.innerHTML = allWords.length
+                    ? '<div class="empty-state">No words match this filter.</div>'
+                    : '<div class="empty-state">No words yet. Search for a word to start building your vocabulary!</div>';
+                return;
+            }
+
+            wordList.innerHTML = filtered.map(w => {
+                const germanText = w.gender_article ? `${w.gender_article} ${w.german}` : w.german;
+                return `
+                <div class="word-card">
+                    <button class="delete-btn" onclick="deleteWord(${w.id})" title="Delete">&times;</button>
+                    <div class="top-row">
+                        <span class="badge ${badgeClass(w.word_type)}">${esc(w.word_type || 'word')}</span>
+                        ${renderGerman(w)}
+                        <button class="speak-btn" onclick="speak('${esc(germanText)}')" title="Listen">&#128264;</button>
+                    </div>
+                    ${renderVerbForms(w)}
+                    <div class="english-line">${esc(w.english)}</div>
+                    <div class="sentence-block">
+                        <div class="sentence-de">
+                            ${esc(w.example_sentence)}
+                            <button class="speak-btn" onclick="speak('${esc(w.example_sentence)}')" title="Listen to sentence">&#128264;</button>
+                        </div>
+                        ${w.sentence_translation ? `<div class="sentence-en">${esc(w.sentence_translation)}</div>` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
         async function loadWords() {
             try {
                 const res = await fetch('/api/words');
-                const words = await res.json();
-
-                wordCount.textContent = words.length ? `${words.length} word${words.length !== 1 ? 's' : ''}` : '';
-
-                if (!words.length) {
-                    wordList.innerHTML = '<div class="empty-state">No words yet. Search for a word to start building your vocabulary!</div>';
-                    return;
-                }
-
-                wordList.innerHTML = words.map(w => `
-                    <div class="word-card">
-                        <button class="delete-btn" onclick="deleteWord(${w.id})" title="Delete">&times;</button>
-                        <div class="top-row">
-                            <span class="badge ${badgeClass(w.word_type)}">${esc(w.word_type || 'word')}</span>
-                            ${renderGerman(w)}
-                        </div>
-                        ${renderVerbForms(w)}
-                        <div class="english-line">${esc(w.english)}</div>
-                        <div class="sentence-block">
-                            <div class="sentence-de">${esc(w.example_sentence)}</div>
-                            ${w.sentence_translation ? `<div class="sentence-en">${esc(w.sentence_translation)}</div>` : ''}
-                        </div>
-                    </div>
-                `).join('');
+                allWords = await res.json();
+                renderFilters();
+                renderWords();
             } catch (err) {
                 console.error('Failed to load words:', err);
             }
