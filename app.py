@@ -2,12 +2,14 @@ import json
 import os
 from datetime import datetime
 from functools import wraps
+from urllib.parse import quote
 
 import bcrypt
 import psycopg2
 import psycopg2.extras
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+import httpx
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 from groq import Groq
 
 load_dotenv()
@@ -207,6 +209,17 @@ def me():
     if "user_id" not in session:
         return jsonify({"logged_in": False}), 401
     return jsonify({"logged_in": True, "username": session["username"]})
+
+
+@app.route("/api/tts")
+def tts():
+    text = request.args.get("text", "")
+    lang = request.args.get("lang", "de")
+    if not text:
+        return "No text", 400
+    url = f"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={quote(text)}"
+    resp = httpx.get(url, headers={"User-Agent": "Mozilla/5.0"}, follow_redirects=True)
+    return Response(resp.content, content_type="audio/mpeg")
 
 
 # --- Words API ---

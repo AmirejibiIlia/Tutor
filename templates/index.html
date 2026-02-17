@@ -402,12 +402,12 @@
             window.location.href = '/login';
         }
 
+        let currentAudio = null;
         function speak(text, lang) {
-            speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = lang || 'de-DE';
-            utter.rate = 0.9;
-            speechSynthesis.speak(utter);
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+            const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang || 'de')}`;
+            currentAudio = new Audio(url);
+            currentAudio.play();
         }
 
         async function searchWord() {
