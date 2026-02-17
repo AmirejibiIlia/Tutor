@@ -48,10 +48,10 @@ def init_db():
             verb_forms TEXT,
             example_sentence TEXT NOT NULL,
             sentence_translation TEXT,
+            difficulty TEXT DEFAULT 'new',
             created_at TIMESTAMP NOT NULL
         )
     """)
-    # Migrate old table: add columns that may be missing
     migrations = [
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS word_type TEXT",
@@ -59,6 +59,7 @@ def init_db():
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS plural TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS verb_forms TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS sentence_translation TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS difficulty TEXT DEFAULT 'new'",
     ]
     for sql in migrations:
         cur.execute(sql)
@@ -123,6 +124,12 @@ Respond in EXACTLY this JSON format, no extra text:
 @login_required
 def index():
     return render_template("index.html")
+
+
+@app.route("/stats")
+@login_required
+def stats_page():
+    return render_template("stats.html")
 
 
 @app.route("/login")
@@ -239,8 +246,8 @@ def search():
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO words (user_id, english, german, word_type, gender_article, plural, verb_forms, example_sentence, sentence_translation, created_at)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+        """INSERT INTO words (user_id, english, german, word_type, gender_article, plural, verb_forms, example_sentence, sentence_translation, difficulty, created_at)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
         (
             session["user_id"],
             result["english"],
@@ -251,6 +258,7 @@ def search():
             result.get("verb_forms"),
             result["example_sentence"],
             result.get("sentence_translation"),
+            "new",
             datetime.utcnow(),
         ),
     )
@@ -260,6 +268,7 @@ def search():
     conn.close()
 
     result["id"] = word_id
+    result["difficulty"] = "new"
     result["created_at"] = datetime.utcnow().isoformat()
     return jsonify(result)
 
@@ -278,6 +287,22 @@ def get_words():
     return jsonify(rows)
 
 
+@app.route("/api/words/<int:word_id>/difficulty", methods=["PATCH"])
+@login_required
+def set_difficulty(word_id):
+    data = request.get_json()
+    difficulty = data.get("difficulty", "new")
+    if difficulty not in ("new", "hard", "medium", "easy"):
+        return jsonify({"error": "Invalid difficulty"}), 400
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE words SET difficulty = %s WHERE id = %s AND user_id = %s", (difficulty, word_id, session["user_id"]))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({"ok": True})
+
+
 @app.route("/api/words/<int:word_id>", methods=["DELETE"])
 @login_required
 def delete_word(word_id):
@@ -288,6 +313,80 @@ def delete_word(word_id):
     cur.close()
     conn.close()
     return jsonify({"ok": True})
+
+
+@app.route("/api/stats")
+@login_required
+def get_stats():
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    uid = session["user_id"]
+
+    # Total count
+    cur.execute("SELECT COUNT(*) as total FROM words WHERE user_id = %s", (uid,))
+    total = cur.fetchone()["total"]
+
+    # By type
+    cur.execute("SELECT COALESCE(word_type, 'other') as word_type, COUNT(*) as count FROM words WHERE user_id = %s GROUP BY word_type ORDER BY count DESC", (uid,))
+    by_type = [dict(r) for r in cur.fetchall()]
+
+    # By difficulty
+    cur.execute("SELECT COALESCE(difficulty, 'new') as difficulty, COUNT(*) as count FROM words WHERE user_id = %s GROUP BY difficulty", (uid,))
+    by_difficulty = {r["difficulty"]: r["count"] for r in cur.fetchall()}
+
+    # Words per day (last 30 days)
+    cur.execute("""
+        SELECT DATE(created_at) as day, COUNT(*) as count
+        FROM words WHERE user_id = %s AND created_at > NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at) ORDER BY day
+    """, (uid,))
+    daily = [{"day": r["day"].isoformat(), "count": r["count"]} for r in cur.fetchall()]
+
+    # Streak: consecutive days with at least 1 word
+    cur.execute("""
+        SELECT DISTINCT DATE(created_at) as day
+        FROM words WHERE user_id = %s ORDER BY day DESC
+    """, (uid,))
+    days = [r["day"] for r in cur.fetchall()]
+    streak = 0
+    from datetime import date, timedelta
+    today = date.today()
+    for i, d in enumerate(days):
+        expected = today - timedelta(days=i)
+        if d == expected:
+            streak += 1
+        elif i == 0 and d == today - timedelta(days=1):
+            # Allow if today has no words yet but yesterday does
+            streak += 1
+            today = today - timedelta(days=1)
+        else:
+            break
+
+    cur.close()
+    conn.close()
+
+    # Milestones
+    milestones = [
+        {"target": 1, "label": "First Word", "icon": "seed"},
+        {"target": 10, "label": "Getting Started", "icon": "sprout"},
+        {"target": 25, "label": "Quarter Century", "icon": "leaf"},
+        {"target": 50, "label": "Half Century", "icon": "tree"},
+        {"target": 100, "label": "Century", "icon": "star"},
+        {"target": 250, "label": "Enthusiast", "icon": "fire"},
+        {"target": 500, "label": "Scholar", "icon": "book"},
+        {"target": 1000, "label": "Master", "icon": "crown"},
+    ]
+    for m in milestones:
+        m["reached"] = total >= m["target"]
+
+    return jsonify({
+        "total": total,
+        "by_type": by_type,
+        "by_difficulty": by_difficulty,
+        "daily": daily,
+        "streak": streak,
+        "milestones": milestones,
+    })
 
 
 if __name__ == "__main__":

@@ -3,22 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>German Vocab Tutor</title>
+    <title>Wortschatz</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2e7d5e;
+            --primary-dark: #1e5c42;
+            --primary-light: #e8f5ee;
+            --accent: #e8a838;
+            --bg: #f8f7f4;
+            --card: #ffffff;
+            --border: #e8e5df;
+            --text: #2d2d2d;
+            --text-light: #888;
+            --text-muted: #aaa;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f7f6f3;
-            color: #2d2d2d;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
         }
 
         /* Nav */
         .nav {
-            background: #1a1a2e;
-            padding: 16px 28px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -27,28 +39,46 @@
             font-family: 'Source Serif 4', Georgia, serif;
             font-size: 1.3rem;
             font-weight: 700;
-            color: #fff;
-            letter-spacing: -0.3px;
+            color: var(--primary-dark);
         }
-        .nav .brand span { color: #f0c040; }
+        .nav .brand span { color: var(--accent); }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-link {
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { border-color: var(--primary); color: var(--primary); }
+        .nav-link.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
         .nav .user-info {
             display: flex;
             align-items: center;
             gap: 14px;
             font-size: 0.88rem;
-            color: rgba(255,255,255,0.7);
+            color: var(--text-light);
         }
         .nav .logout-btn {
             padding: 6px 16px;
             font-size: 0.82rem;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            border: 1px solid var(--border);
             border-radius: 6px;
             cursor: pointer;
-            color: rgba(255,255,255,0.8);
+            color: var(--text-light);
             transition: all 0.2s;
         }
-        .nav .logout-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .nav .logout-btn:hover { border-color: #ccc; color: var(--text); }
 
         /* Layout */
         .layout {
@@ -60,15 +90,12 @@
         }
 
         /* Sidebar */
-        .sidebar {
-            width: 190px;
-            flex-shrink: 0;
-        }
+        .sidebar { width: 190px; flex-shrink: 0; }
         .sidebar-title {
             font-size: 0.7rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #999;
+            color: var(--text-muted);
             margin-bottom: 10px;
             font-weight: 600;
         }
@@ -88,191 +115,107 @@
             color: #666;
             transition: all 0.15s;
         }
-        .filter-btn:hover { background: #edecea; color: #333; }
-        .filter-btn.active {
-            background: #1a1a2e;
-            color: #fff;
-        }
-        .filter-btn .count {
-            font-size: 0.75rem;
-            opacity: 0.6;
-            font-weight: 400;
-        }
+        .filter-btn:hover { background: var(--primary-light); color: var(--primary-dark); }
+        .filter-btn.active { background: var(--primary); color: #fff; }
+        .filter-btn .count { font-size: 0.75rem; opacity: 0.6; font-weight: 400; }
         .filter-btn .dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 8px;
-            flex-shrink: 0;
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; margin-right: 8px; flex-shrink: 0;
         }
-        .filter-btn .label-group {
-            display: flex;
-            align-items: center;
-        }
+        .filter-btn .label-group { display: flex; align-items: center; }
 
-        /* Mobile filter pills */
+        /* Mobile pills */
         .filter-pills {
-            display: none;
-            overflow-x: auto;
-            gap: 6px;
-            padding-bottom: 4px;
-            margin-bottom: 16px;
+            display: none; overflow-x: auto; gap: 6px;
+            padding-bottom: 4px; margin-bottom: 16px;
             -webkit-overflow-scrolling: touch;
         }
         .filter-pills::-webkit-scrollbar { display: none; }
         .pill-btn {
-            flex-shrink: 0;
-            padding: 7px 14px;
-            font-size: 0.82rem;
-            font-weight: 500;
-            background: white;
-            border: 1px solid #e0ddd8;
-            border-radius: 20px;
-            cursor: pointer;
-            color: #666;
-            white-space: nowrap;
-            transition: all 0.15s;
+            flex-shrink: 0; padding: 7px 14px; font-size: 0.82rem; font-weight: 500;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 20px; cursor: pointer; color: #666;
+            white-space: nowrap; transition: all 0.15s;
         }
-        .pill-btn:hover { border-color: #999; color: #333; }
-        .pill-btn.active {
-            background: #1a1a2e;
-            color: #fff;
-            border-color: #1a1a2e;
-        }
+        .pill-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .pill-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
         /* Main */
         .main { flex: 1; min-width: 0; }
 
         .search-section {
-            background: white;
+            background: var(--card);
             border-radius: 14px;
             padding: 24px;
-            border: 1px solid #e8e6e1;
+            border: 1px solid var(--border);
             margin-bottom: 24px;
         }
         .search-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
+            font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
         }
-        .search-box {
-            display: flex;
-            gap: 10px;
-        }
+        .search-box { display: flex; gap: 10px; }
         .search-box input {
-            flex: 1;
-            padding: 13px 18px;
-            font-size: 1rem;
+            flex: 1; padding: 13px 18px; font-size: 1rem;
             font-family: 'Source Serif 4', Georgia, serif;
-            border: 2px solid #e8e6e1;
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.2s;
-            background: #fafaf8;
+            border: 2px solid var(--border); border-radius: 10px;
+            outline: none; transition: border-color 0.2s; background: #fafaf8;
         }
-        .search-box input:focus { border-color: #1a1a2e; background: #fff; }
-        .search-box input::placeholder { color: #bbb; }
+        .search-box input:focus { border-color: var(--primary); background: #fff; }
+        .search-box input::placeholder { color: #ccc; }
         .search-box button {
-            padding: 13px 28px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            background: #1a1a2e;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.2s;
+            padding: 13px 28px; font-size: 0.95rem; font-weight: 600;
+            background: var(--primary); color: white; border: none;
+            border-radius: 10px; cursor: pointer; transition: background 0.2s;
             white-space: nowrap;
         }
-        .search-box button:hover { background: #2d2d4e; }
+        .search-box button:hover { background: var(--primary-dark); }
         .search-box button:disabled { background: #bbb; cursor: not-allowed; }
 
-        .loading {
-            text-align: center;
-            padding: 16px;
-            color: #999;
-            font-size: 0.9rem;
-            display: none;
-        }
+        .loading { text-align: center; padding: 16px; color: var(--text-muted); font-size: 0.9rem; display: none; }
         .error {
-            padding: 10px 14px;
-            color: #c0392b;
-            background: #fdf0ef;
-            border: 1px solid #f5c6c0;
-            border-radius: 8px;
-            margin-top: 12px;
-            font-size: 0.88rem;
-            display: none;
+            padding: 10px 14px; color: #c0392b; background: #fdf0ef;
+            border: 1px solid #f5c6c0; border-radius: 8px;
+            margin-top: 12px; font-size: 0.88rem; display: none;
         }
 
         /* Words header */
         .words-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            margin-bottom: 14px;
+            display: flex; align-items: baseline;
+            justify-content: space-between; margin-bottom: 14px;
         }
         .words-header h2 {
             font-family: 'Source Serif 4', Georgia, serif;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #1a1a2e;
+            font-size: 1.15rem; font-weight: 700; color: var(--primary-dark);
         }
-        .word-count {
-            color: #aaa;
-            font-size: 0.82rem;
-        }
+        .word-count { color: var(--text-muted); font-size: 0.82rem; }
 
-        /* Word card — dictionary style */
+        /* Word card */
         .word-card {
-            background: white;
-            border-radius: 14px;
-            padding: 22px 26px;
-            margin-bottom: 14px;
-            border: 1px solid #e8e6e1;
-            position: relative;
+            background: var(--card); border-radius: 14px;
+            padding: 22px 26px; margin-bottom: 14px;
+            border: 1px solid var(--border); position: relative;
             transition: box-shadow 0.2s;
         }
-        .word-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-        }
+        .word-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
 
         .word-card .entry-header {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 4px;
+            display: flex; align-items: baseline; gap: 10px;
+            flex-wrap: wrap; margin-bottom: 4px;
         }
         .word-card .headword {
             font-family: 'Source Serif 4', Georgia, serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #1a1a2e;
+            font-size: 1.4rem; font-weight: 700; color: var(--primary-dark);
         }
         .word-card .article {
             font-family: 'Source Serif 4', Georgia, serif;
-            font-size: 1.4rem;
-            font-weight: 400;
-            color: #7c6f5b;
+            font-size: 1.4rem; font-weight: 400; color: var(--accent);
         }
-        .word-card .grammar-info {
-            font-size: 0.85rem;
-            color: #999;
-            font-style: italic;
-        }
+        .word-card .grammar-info { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+
         .word-card .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+            display: inline-block; padding: 2px 10px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
         }
         .badge-noun { background: #eef3ff; color: #3b5998; }
         .badge-verb { background: #eefbf0; color: #27713a; }
@@ -296,140 +239,80 @@
 
         .word-card .verb-line {
             font-family: 'Source Serif 4', Georgia, serif;
-            font-size: 0.95rem;
-            color: #666;
-            margin: 4px 0;
-            font-style: italic;
+            font-size: 0.95rem; color: #666; margin: 4px 0; font-style: italic;
         }
-
-        .word-card .translation {
-            font-size: 1.05rem;
-            color: #555;
-            margin: 8px 0;
-            padding-left: 2px;
-        }
-
+        .word-card .translation { font-size: 1.05rem; color: #555; margin: 8px 0; }
         .word-card .example {
-            background: #fafaf8;
-            border-left: 3px solid #d4c9a8;
-            padding: 12px 16px;
-            border-radius: 0 8px 8px 0;
-            margin-top: 12px;
+            background: #fafaf8; border-left: 3px solid var(--primary);
+            padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 12px;
         }
         .word-card .example-de {
             font-family: 'Source Serif 4', Georgia, serif;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #2d2d2d;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 0.95rem; font-weight: 500; color: var(--text); margin-bottom: 4px;
+            display: flex; align-items: center; gap: 6px;
         }
-        .word-card .example-en {
-            font-size: 0.88rem;
-            color: #999;
-            font-style: italic;
+        .word-card .example-en { font-size: 0.88rem; color: var(--text-muted); font-style: italic; }
+
+        /* Difficulty */
+        .difficulty-row {
+            display: flex; align-items: center; gap: 6px; margin-top: 12px;
         }
+        .diff-label { font-size: 0.75rem; color: var(--text-muted); margin-right: 4px; }
+        .diff-btn {
+            padding: 4px 12px; font-size: 0.75rem; font-weight: 600;
+            border: 1px solid var(--border); border-radius: 14px;
+            cursor: pointer; background: transparent; color: #888;
+            transition: all 0.15s;
+        }
+        .diff-btn:hover { border-color: #999; }
+        .diff-btn.active-hard { background: #fde8e8; border-color: #e57373; color: #c62828; }
+        .diff-btn.active-medium { background: #fff3e0; border-color: #ffb74d; color: #e65100; }
+        .diff-btn.active-easy { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
 
         .word-card .delete-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: #d0cdc6;
-            cursor: pointer;
-            font-size: 1.3rem;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.2s;
+            position: absolute; top: 16px; right: 16px; background: none;
+            border: none; color: #d0cdc6; cursor: pointer; font-size: 1.3rem;
+            padding: 4px 8px; border-radius: 4px; transition: all 0.2s;
         }
-        .word-card .delete-btn:hover {
-            color: #c0392b;
-            background: #fdf0ef;
-        }
+        .word-card .delete-btn:hover { color: #c0392b; background: #fdf0ef; }
 
-        /* Speaker button */
         .speak-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-            color: #7c6f5b;
-            padding: 2px 5px;
-            border-radius: 4px;
-            transition: all 0.15s;
-            vertical-align: middle;
+            background: none; border: none; cursor: pointer; font-size: 0.95rem;
+            color: var(--primary); padding: 2px 5px; border-radius: 4px;
+            transition: all 0.15s; vertical-align: middle;
         }
-        .speak-btn:hover { background: #f0ece4; color: #4a3f2f; }
+        .speak-btn:hover { background: var(--primary-light); }
 
         /* Pagination */
         .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            margin-top: 20px;
-            padding-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 20px; padding-bottom: 20px;
         }
         .page-btn {
-            padding: 8px 14px;
-            font-size: 0.88rem;
-            font-weight: 500;
-            background: white;
-            border: 1px solid #e0ddd8;
-            border-radius: 8px;
-            cursor: pointer;
-            color: #555;
-            transition: all 0.15s;
+            padding: 8px 14px; font-size: 0.88rem; font-weight: 500;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 8px; cursor: pointer; color: #555; transition: all 0.15s;
         }
-        .page-btn:hover { border-color: #999; color: #1a1a2e; }
-        .page-btn.active {
-            background: #1a1a2e;
-            color: white;
-            border-color: #1a1a2e;
-        }
-        .page-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .page-info {
-            font-size: 0.82rem;
-            color: #aaa;
-            padding: 0 8px;
-        }
+        .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-info { font-size: 0.82rem; color: var(--text-muted); padding: 0 8px; }
 
         .empty-state {
-            text-align: center;
-            color: #bbb;
-            padding: 60px 20px;
-            font-size: 0.95rem;
-            font-style: italic;
+            text-align: center; color: #bbb; padding: 60px 20px;
+            font-size: 0.95rem; font-style: italic;
         }
 
-        /* Responsive */
         @media (max-width: 700px) {
             .nav { padding: 12px 16px; }
             .nav .brand { font-size: 1.1rem; }
-
-            .layout {
-                flex-direction: column;
-                padding: 16px 12px;
-                gap: 0;
-            }
-
+            .layout { flex-direction: column; padding: 16px 12px; gap: 0; }
             .sidebar { display: none; }
             .filter-pills { display: flex; }
-
             .search-section { padding: 18px; border-radius: 12px; }
             .search-box { flex-direction: column; }
             .search-box button { padding: 13px; }
-
-            .word-card {
-                padding: 18px;
-                border-radius: 12px;
-            }
+            .word-card { padding: 18px; border-radius: 12px; }
             .word-card .headword { font-size: 1.2rem; }
             .word-card .article { font-size: 1.2rem; }
         }
@@ -438,6 +321,10 @@
 <body>
     <div class="nav">
         <div class="brand">Wort<span>schatz</span></div>
+        <div class="nav-links">
+            <a href="/" class="nav-link active">Dictionary</a>
+            <a href="/stats" class="nav-link">Statistics</a>
+        </div>
         <div class="user-info">
             <span id="usernameDisplay"></span>
             <button class="logout-btn" onclick="doLogout()">Log out</button>
@@ -446,7 +333,6 @@
 
     <div class="layout">
         <div class="sidebar" id="sidebar"></div>
-
         <div class="main">
             <div class="search-section">
                 <div class="search-label">Look up a word</div>
@@ -470,15 +356,16 @@
     </div>
 
     <script>
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const loading = document.getElementById('loading');
-        const error = document.getElementById('error');
-        const wordList = document.getElementById('wordList');
-        const wordCount = document.getElementById('wordCount');
-        const sidebar = document.getElementById('sidebar');
-        const filterPills = document.getElementById('filterPills');
-        const pagination = document.getElementById('pagination');
+        const $ = id => document.getElementById(id);
+        const searchInput = $('searchInput');
+        const searchBtn = $('searchBtn');
+        const loading = $('loading');
+        const error = $('error');
+        const wordList = $('wordList');
+        const wordCount = $('wordCount');
+        const sidebar = $('sidebar');
+        const filterPills = $('filterPills');
+        const pagination = $('pagination');
 
         let allWords = [];
         let activeFilter = 'all';
@@ -498,16 +385,11 @@
         };
 
         fetch('/api/me').then(r => r.json()).then(data => {
-            if (data.logged_in) {
-                document.getElementById('usernameDisplay').textContent = data.username;
-            } else {
-                window.location.href = '/login';
-            }
+            if (data.logged_in) $('usernameDisplay').textContent = data.username;
+            else window.location.href = '/login';
         });
 
-        searchInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') searchWord();
-        });
+        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchWord(); });
 
         async function doLogout() {
             await fetch('/api/logout', { method: 'POST' });
@@ -525,11 +407,9 @@
         async function searchWord() {
             const word = searchInput.value.trim();
             if (!word) return;
-
             error.style.display = 'none';
             loading.style.display = 'block';
             searchBtn.disabled = true;
-
             try {
                 const res = await fetch('/api/search', {
                     method: 'POST',
@@ -556,64 +436,48 @@
             loadWords();
         }
 
+        async function setDifficulty(id, diff) {
+            await fetch(`/api/words/${id}/difficulty`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ difficulty: diff })
+            });
+            const w = allWords.find(w => w.id === id);
+            if (w) w.difficulty = diff;
+            renderWords();
+        }
+
         function normalizeType(type) {
             if (!type) return 'other';
             const t = type.toLowerCase();
-            if (TYPE_META[t]) return t;
-            return 'other';
+            return TYPE_META[t] ? t : 'other';
         }
 
-        function setFilter(type) {
-            activeFilter = type;
-            currentPage = 1;
-            renderFilters();
-            renderWords();
-        }
-
-        function setPage(p) {
-            currentPage = p;
-            renderWords();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        function setFilter(type) { activeFilter = type; currentPage = 1; renderFilters(); renderWords(); }
+        function setPage(p) { currentPage = p; renderWords(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
         function renderFilters() {
             const counts = { all: allWords.length };
-            allWords.forEach(w => {
-                const t = normalizeType(w.word_type);
-                counts[t] = (counts[t] || 0) + 1;
-            });
+            allWords.forEach(w => { const t = normalizeType(w.word_type); counts[t] = (counts[t] || 0) + 1; });
 
             const types = [['all', 'All', '']].concat(
-                Object.entries(TYPE_META)
-                    .filter(([key]) => counts[key])
-                    .map(([key, meta]) => [key, meta.label, meta.dot])
+                Object.entries(TYPE_META).filter(([k]) => counts[k]).map(([k, m]) => [k, m.label, m.dot])
             );
 
-            sidebar.innerHTML = '<div class="sidebar-title">Filter by type</div>' + types.map(([key, label, dot]) => `
-                <button class="filter-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
-                    <span class="label-group">
-                        ${dot ? `<span class="dot ${dot}"></span>` : ''}
-                        ${label}
-                    </span>
-                    <span class="count">${counts[key] || 0}</span>
-                </button>
-            `).join('');
+            sidebar.innerHTML = '<div class="sidebar-title">Filter by type</div>' + types.map(([k, l, d]) => `
+                <button class="filter-btn ${activeFilter === k ? 'active' : ''}" onclick="setFilter('${k}')">
+                    <span class="label-group">${d ? `<span class="dot ${d}"></span>` : ''}${l}</span>
+                    <span class="count">${counts[k] || 0}</span>
+                </button>`).join('');
 
-            filterPills.innerHTML = types.map(([key, label]) => `
-                <button class="pill-btn ${activeFilter === key ? 'active' : ''}" onclick="setFilter('${key}')">
-                    ${label} ${counts[key] || 0}
-                </button>
-            `).join('');
+            filterPills.innerHTML = types.map(([k, l]) => `
+                <button class="pill-btn ${activeFilter === k ? 'active' : ''}" onclick="setFilter('${k}')">${l} ${counts[k] || 0}</button>`).join('');
         }
 
         function renderWords() {
-            const filtered = activeFilter === 'all'
-                ? allWords
-                : allWords.filter(w => normalizeType(w.word_type) === activeFilter);
-
+            const filtered = activeFilter === 'all' ? allWords : allWords.filter(w => normalizeType(w.word_type) === activeFilter);
             const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
             if (currentPage > totalPages) currentPage = totalPages;
-
             const start = (currentPage - 1) * PER_PAGE;
             const pageWords = filtered.slice(start, start + PER_PAGE);
 
@@ -631,26 +495,21 @@
                 const type = normalizeType(w.word_type);
                 const meta = TYPE_META[type] || TYPE_META.other;
                 const germanSpoken = w.gender_article ? `${w.gender_article} ${w.german}` : w.german;
+                const diff = w.difficulty || 'new';
 
                 let headerHtml = '';
                 if (type === 'noun' && w.gender_article) {
-                    headerHtml = `
-                        <span class="article">${esc(w.gender_article)}</span>
+                    headerHtml = `<span class="article">${esc(w.gender_article)}</span>
                         <span class="headword">${esc(w.german)}</span>
                         <button class="speak-btn" onclick="speak('${escAttr(germanSpoken)}')" title="Listen">&#128264;</button>
-                        <span class="grammar-info">Pl. die ${esc(w.plural || '—')}</span>
-                    `;
+                        <span class="grammar-info">Pl. die ${esc(w.plural || '—')}</span>`;
                 } else {
-                    headerHtml = `
-                        <span class="headword">${esc(w.german)}</span>
-                        <button class="speak-btn" onclick="speak('${escAttr(w.german)}')" title="Listen">&#128264;</button>
-                    `;
+                    headerHtml = `<span class="headword">${esc(w.german)}</span>
+                        <button class="speak-btn" onclick="speak('${escAttr(w.german)}')" title="Listen">&#128264;</button>`;
                 }
 
-                let verbHtml = '';
-                if (type === 'verb' && w.verb_forms) {
-                    verbHtml = `<div class="verb-line">${esc(w.german)} &mdash; ${esc(w.verb_forms)}</div>`;
-                }
+                const verbHtml = type === 'verb' && w.verb_forms
+                    ? `<div class="verb-line">${esc(w.german)} &mdash; ${esc(w.verb_forms)}</div>` : '';
 
                 return `
                 <div class="word-card">
@@ -668,25 +527,26 @@
                         </div>
                         ${w.sentence_translation ? `<div class="example-en">${esc(w.sentence_translation)}</div>` : ''}
                     </div>
-                </div>
-                `;
+                    <div class="difficulty-row">
+                        <span class="diff-label">How well do you know this?</span>
+                        <button class="diff-btn ${diff === 'hard' ? 'active-hard' : ''}" onclick="setDifficulty(${w.id}, 'hard')">Hard</button>
+                        <button class="diff-btn ${diff === 'medium' ? 'active-medium' : ''}" onclick="setDifficulty(${w.id}, 'medium')">Medium</button>
+                        <button class="diff-btn ${diff === 'easy' ? 'active-easy' : ''}" onclick="setDifficulty(${w.id}, 'easy')">Easy</button>
+                    </div>
+                </div>`;
             }).join('');
 
-            // Pagination
-            if (totalPages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-            let pagHtml = `<button class="page-btn" onclick="setPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
+            if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+            let ph = `<button class="page-btn" onclick="setPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&laquo;</button>`;
             for (let i = 1; i <= totalPages; i++) {
-                if (totalPages > 7 && i > 2 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
-                    if (i === 3 || i === totalPages - 2) pagHtml += '<span class="page-info">...</span>';
+                if (totalPages > 7 && i > 2 && i < totalPages-1 && Math.abs(i-currentPage) > 1) {
+                    if (i === 3 || i === totalPages-2) ph += '<span class="page-info">...</span>';
                     continue;
                 }
-                pagHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="setPage(${i})">${i}</button>`;
+                ph += `<button class="page-btn ${i===currentPage?'active':''}" onclick="setPage(${i})">${i}</button>`;
             }
-            pagHtml += `<button class="page-btn" onclick="setPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
-            pagination.innerHTML = pagHtml;
+            ph += `<button class="page-btn" onclick="setPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&raquo;</button>`;
+            pagination.innerHTML = ph;
         }
 
         async function loadWords() {
@@ -695,9 +555,7 @@
                 allWords = await res.json();
                 renderFilters();
                 renderWords();
-            } catch (err) {
-                console.error('Failed to load words:', err);
-            }
+            } catch (err) { console.error('Failed to load words:', err); }
         }
 
         function esc(str) {
@@ -706,7 +564,6 @@
             d.textContent = str;
             return d.innerHTML;
         }
-
         function escAttr(str) {
             if (!str) return '';
             return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
