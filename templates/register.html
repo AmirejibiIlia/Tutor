@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Wortschatz</title>
+    <title>Register - Deutschly</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,11 +55,15 @@
         .link { text-align: center; margin-top: 22px; font-size: 0.88rem; color: #999; }
         .link a { color: #2e7d5e; text-decoration: none; font-weight: 600; }
         .link a:hover { text-decoration: underline; }
+        @media (max-width: 480px) {
+            .auth-card { padding: 32px 24px; }
+            .brand { font-size: 1.4rem; }
+        }
     </style>
 </head>
 <body>
     <div class="auth-card">
-        <div class="brand">Wort<span>schatz</span></div>
+        <div class="brand">Deutsch<span>ly</span></div>
         <p class="subtitle">Create your dictionary</p>
         <div class="error-msg" id="error"></div>
         <div class="form-group">
