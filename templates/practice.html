@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice - Deutschly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d5e;
+            --primary-dark: #1e5c42;
+            --primary-light: #e8f5ee;
+            --accent: #e8a838;
+            --bg: #f8f7f4;
+            --card: #ffffff;
+            --border: #e8e5df;
+            --text: #2d2d2d;
+            --text-light: #888;
+            --text-muted: #aaa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg); color: var(--text); min-height: 100vh;
+        }
+
+        /* Nav */
+        .nav {
+            background: var(--card); border-bottom: 1px solid var(--border);
+            padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav .brand {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.3rem; font-weight: 700; color: var(--primary-dark);
+        }
+        .nav .brand span { color: var(--accent); }
+        .nav-links { display: flex; align-items: center; gap: 8px; }
+        .nav-link {
+            padding: 7px 16px; font-size: 0.85rem; font-weight: 500;
+            background: transparent; border: 1px solid var(--border); border-radius: 8px;
+            cursor: pointer; color: var(--text-light); text-decoration: none; transition: all 0.2s;
+        }
+        .nav-link:hover { border-color: var(--primary); color: var(--primary); }
+        .nav-link.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+        .nav .user-info {
+            display: flex; align-items: center; gap: 14px;
+            font-size: 0.88rem; color: var(--text-light);
+        }
+        .nav .logout-btn {
+            padding: 6px 16px; font-size: 0.82rem; background: transparent;
+            border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+            color: var(--text-light); transition: all 0.2s;
+        }
+        .nav .logout-btn:hover { border-color: #ccc; color: var(--text); }
+
+        /* Layout */
+        .container {
+            max-width: 900px; margin: 0 auto; padding: 28px 24px;
+        }
+
+        /* Chat section */
+        .chat-section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; margin-bottom: 24px; overflow: hidden;
+        }
+        .chat-header {
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .chat-header h2 {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.15rem; font-weight: 700; color: var(--primary-dark);
+        }
+        .chat-header .start-btn {
+            padding: 8px 20px; font-size: 0.85rem; font-weight: 600;
+            background: var(--primary); color: white; border: none;
+            border-radius: 8px; cursor: pointer; transition: background 0.2s;
+        }
+        .chat-header .start-btn:hover { background: var(--primary-dark); }
+
+        .chat-messages {
+            height: 340px; overflow-y: auto; padding: 20px 24px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+        .msg {
+            max-width: 80%; padding: 12px 16px; border-radius: 14px;
+            font-size: 0.92rem; line-height: 1.5; position: relative;
+        }
+        .msg.ai {
+            align-self: flex-start; background: var(--primary-light); color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
+        .msg.user {
+            align-self: flex-end; background: var(--primary); color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .msg .speak-msg {
+            position: absolute; top: 8px; right: 8px;
+            background: none; border: none; cursor: pointer;
+            font-size: 0.85rem; color: var(--primary-dark); opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .msg.user .speak-msg { color: rgba(255,255,255,0.7); }
+        .msg .speak-msg:hover { opacity: 1; }
+
+        .chat-empty {
+            text-align: center; color: var(--text-muted); padding: 80px 20px;
+            font-style: italic; font-size: 0.9rem;
+        }
+
+        .chat-input {
+            border-top: 1px solid var(--border); padding: 16px 24px;
+            display: flex; gap: 10px; align-items: center;
+        }
+        .chat-input input {
+            flex: 1; padding: 12px 16px; font-size: 0.95rem;
+            border: 2px solid var(--border); border-radius: 10px;
+            outline: none; background: #fafaf8; transition: border-color 0.2s;
+        }
+        .chat-input input:focus { border-color: var(--primary); background: #fff; }
+        .chat-input input::placeholder { color: #ccc; }
+        .chat-input .send-btn {
+            padding: 12px 22px; font-size: 0.9rem; font-weight: 600;
+            background: var(--primary); color: white; border: none;
+            border-radius: 10px; cursor: pointer; transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .chat-input .send-btn:hover { background: var(--primary-dark); }
+        .chat-input .send-btn:disabled { background: #bbb; }
+
+        .mic-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 2px solid var(--border); background: white;
+            cursor: pointer; font-size: 1.1rem; display: flex;
+            align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .mic-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+        .mic-btn.recording {
+            border-color: #e57373; background: #fde8e8;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(229,115,115,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(229,115,115,0); }
+        }
+
+        /* Word table */
+        .table-section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+        .table-header {
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .table-header h2 {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.15rem; font-weight: 700; color: var(--primary-dark);
+        }
+        .table-count { font-size: 0.82rem; color: var(--text-muted); }
+
+        .word-table {
+            width: 100%; border-collapse: collapse;
+        }
+        .word-table th {
+            text-align: left; padding: 10px 24px;
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            background: #fafaf8; border-bottom: 1px solid var(--border);
+        }
+        .word-table td {
+            padding: 12px 24px; border-bottom: 1px solid #f0eeea;
+            font-size: 0.92rem;
+        }
+        .word-table tr:last-child td { border-bottom: none; }
+        .word-table tr:hover td { background: #fafaf8; }
+        .word-table .german-col {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-weight: 600; color: var(--primary-dark);
+        }
+        .word-table .english-col { color: #555; }
+        .word-table .type-col {
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-muted);
+        }
+        .word-table .level-col {
+            font-size: 0.72rem; font-weight: 700;
+        }
+        .level-A1 { color: #2e7d32; } .level-A2 { color: #558b2f; }
+        .level-B1 { color: #f9a825; } .level-B2 { color: #e65100; }
+        .level-C1 { color: #c62828; } .level-C2 { color: #6a1b9a; }
+
+        .table-empty {
+            text-align: center; padding: 40px; color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .nav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+            .nav .brand { font-size: 1.1rem; }
+            .nav-links { order: 3; width: 100%; justify-content: center; }
+            .nav-link { font-size: 0.78rem; padding: 6px 12px; }
+            .container { padding: 16px 12px; }
+            .chat-messages { height: 280px; padding: 16px; }
+            .chat-input { padding: 12px 16px; }
+            .msg { max-width: 88%; font-size: 0.88rem; }
+            .chat-header { padding: 14px 18px; }
+            .table-header { padding: 14px 18px; }
+            .word-table th { padding: 8px 14px; }
+            .word-table td { padding: 10px 14px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <div class="brand">Deutsch<span>ly</span></div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Dictionary</a>
+            <a href="/practice" class="nav-link active">Practice</a>
+            <a href="/stats" class="nav-link">Statistics</a>
+        </div>
+        <div class="user-info">
+            <span id="usernameDisplay"></span>
+            <button class="logout-btn" onclick="doLogout()">Log out</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="chat-section">
+            <div class="chat-header">
+                <h2>Practice Conversation</h2>
+                <button class="start-btn" onclick="startConversation()">New conversation</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-empty">Click "New conversation" to start practicing with your vocabulary words.</div>
+            </div>
+            <div class="chat-input">
+                <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Hold to speak">&#127908;</button>
+                <input type="text" id="chatInput" placeholder="Type in German or English..." disabled>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h2>My Words</h2>
+                <span class="table-count" id="tableCount"></span>
+            </div>
+            <div id="tableBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let allWords = [];
+        let chatHistory = [];
+        let currentAudio = null;
+        let isRecording = false;
+        let recognition = null;
+
+        fetch('/api/me').then(r => r.json()).then(data => {
+            if (data.logged_in) document.getElementById('usernameDisplay').textContent = data.username;
+            else window.location.href = '/login';
+        });
+
+        async function doLogout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
+        function speak(text) {
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+            const url = `/api/tts?text=${encodeURIComponent(text)}&lang=de`;
+            currentAudio = new Audio(url);
+            currentAudio.play();
+        }
+
+        // Load words
+        async function loadWords() {
+            const res = await fetch('/api/words');
+            allWords = await res.json();
+            renderTable();
+        }
+
+        function renderTable() {
+            const count = document.getElementById('tableCount');
+            const body = document.getElementById('tableBody');
+            count.textContent = `${allWords.length} words`;
+
+            if (!allWords.length) {
+                body.innerHTML = '<div class="table-empty">No words yet. Add words from the Dictionary page first.</div>';
+                return;
+            }
+
+            body.innerHTML = `<table class="word-table">
+                <thead><tr>
+                    <th>German</th><th>English</th><th>Type</th><th>Level</th>
+                </tr></thead>
+                <tbody>${allWords.map(w => {
+                    const german = w.gender_article ? `${w.gender_article} ${w.german}` : w.german;
+                    const lvl = w.level || '';
+                    return `<tr>
+                        <td class="german-col">${esc(german)}</td>
+                        <td class="english-col">${esc(w.english)}</td>
+                        <td class="type-col">${esc(w.word_type || '')}</td>
+                        <td class="level-col level-${esc(lvl)}">${esc(lvl)}</td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>`;
+        }
+
+        // Chat
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        chatInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();
+        });
+
+        function startConversation() {
+            chatHistory = [];
+            chatMessages.innerHTML = '';
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatInput.focus();
+
+            // AI sends first message
+            addMessage('ai', 'Hallo! Lass uns Deutsch üben. Wie geht es dir heute? 😊');
+            chatHistory.push({ role: 'assistant', content: 'Hallo! Lass uns Deutsch üben. Wie geht es dir heute?' });
+        }
+
+        function addMessage(type, text) {
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerHTML = esc(text);
+            if (type === 'ai') {
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'speak-msg';
+                speakBtn.innerHTML = '&#128264;';
+                speakBtn.onclick = () => speak(text);
+                div.appendChild(speakBtn);
+            }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            chatInput.value = '';
+            addMessage('user', text);
+            chatHistory.push({ role: 'user', content: text });
+
+            sendBtn.disabled = true;
+            chatInput.disabled = true;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        history: chatHistory,
+                        words: allWords.map(w => ({ german: w.german, english: w.english }))
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                addMessage('ai', data.reply);
+                chatHistory.push({ role: 'assistant', content: data.reply });
+
+                // Auto-speak AI response
+                speak(data.reply);
+            } catch (err) {
+                addMessage('ai', 'Error: ' + err.message);
+            }
+
+            sendBtn.disabled = false;
+            chatInput.disabled = false;
+            chatInput.focus();
+        }
+
+        // Speech recognition
+        function toggleMic() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition is not supported in this browser. Try Chrome.');
+                return;
+            }
+
+            const micBtn = document.getElementById('micBtn');
+
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                return;
+            }
+
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.lang = 'de-DE';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                micBtn.classList.add('recording');
+            };
+
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                chatInput.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                micBtn.classList.remove('recording');
+            };
+
+            recognition.onerror = (e) => {
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                if (e.error !== 'no-speech') console.error('Speech error:', e.error);
+            };
+
+            recognition.start();
+        }
+
+        function esc(str) {
+            if (!str) return '';
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        loadWords();
+    </script>
+</body>
+</html>

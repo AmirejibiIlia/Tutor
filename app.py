@@ -168,6 +168,12 @@ def stats_page():
     return render_template("stats.html")
 
 
+@app.route("/practice")
+@login_required
+def practice_page():
+    return render_template("practice.html")
+
+
 @app.route("/login")
 def login_page():
     if "user_id" in session:
@@ -262,6 +268,52 @@ def tts():
     url = f"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={quote(text)}"
     resp = httpx.get(url, headers={"User-Agent": "Mozilla/5.0"}, follow_redirects=True)
     return Response(resp.content, content_type="audio/mpeg")
+
+
+@app.route("/api/chat", methods=["POST"])
+@login_required
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "").strip()
+    history = data.get("history", [])
+    words_context = data.get("words", [])
+
+    if not user_message:
+        return jsonify({"error": "No message"}), 400
+
+    word_list = ", ".join([f"{w['german']} ({w['english']})" for w in words_context[:50]])
+
+    system_prompt = f"""You are a friendly German language practice partner named Deutschly.
+Your goal is to help the student practice speaking German using words from their vocabulary list.
+
+The student's vocabulary words: {word_list}
+
+Rules:
+- Conduct the conversation primarily in German, but mix in English when the student seems stuck.
+- Start simple. Use the student's saved words naturally in conversation.
+- Ask questions that encourage the student to use their vocabulary words in responses.
+- If the student makes a grammar mistake, gently correct it inline (don't lecture, just show the right way).
+- Keep responses short (2-3 sentences max) so it feels like a real conversation, not a lesson.
+- Be encouraging and natural. Use everyday conversational German.
+- Gradually increase complexity as the conversation progresses.
+- If the student writes in English, respond in German with a translation hint."""
+
+    messages = [{"role": "system", "content": system_prompt}]
+    for h in history[-20:]:
+        messages.append({"role": h["role"], "content": h["content"]})
+    messages.append({"role": "user", "content": user_message})
+
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=200,
+        )
+        reply = response.choices[0].message.content.strip()
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/ask", methods=["POST"])
