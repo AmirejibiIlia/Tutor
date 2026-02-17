@@ -269,21 +269,34 @@
         }
         .word-card .example-en { font-size: 0.88rem; color: var(--text-muted); font-style: italic; }
 
-        /* Difficulty */
-        .difficulty-row {
-            display: flex; align-items: center; gap: 6px; margin-top: 12px;
+        /* Level badge */
+        .level-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
         }
-        .diff-label { font-size: 0.75rem; color: var(--text-muted); margin-right: 4px; }
-        .diff-btn {
-            padding: 4px 12px; font-size: 0.75rem; font-weight: 600;
-            border: 1px solid var(--border); border-radius: 14px;
+        .level-A1 { background: #e8f5e9; color: #2e7d32; }
+        .level-A2 { background: #f1f8e9; color: #558b2f; }
+        .level-B1 { background: #fff8e1; color: #f9a825; }
+        .level-B2 { background: #fff3e0; color: #e65100; }
+        .level-C1 { background: #fce4ec; color: #c62828; }
+        .level-C2 { background: #f3e5f5; color: #6a1b9a; }
+
+        /* Known toggle */
+        .known-row {
+            display: flex; align-items: center; gap: 10px; margin-top: 12px;
+        }
+        .known-toggle {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 14px; font-size: 0.8rem; font-weight: 600;
+            border: 1px solid var(--border); border-radius: 20px;
             cursor: pointer; background: transparent; color: #888;
-            transition: all 0.15s;
+            transition: all 0.2s; user-select: none;
         }
-        .diff-btn:hover { border-color: #999; }
-        .diff-btn.active-hard { background: #fde8e8; border-color: #e57373; color: #c62828; }
-        .diff-btn.active-medium { background: #fff3e0; border-color: #ffb74d; color: #e65100; }
-        .diff-btn.active-easy { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
+        .known-toggle:hover { border-color: #999; }
+        .known-toggle.is-known {
+            background: var(--primary-light); border-color: var(--primary); color: var(--primary);
+        }
+        .known-toggle .check { font-size: 0.9rem; }
 
         /* Ask AI */
         .ask-row {
@@ -432,6 +445,7 @@
 
         let allWords = [];
         let activeFilter = 'all';
+        let knownFilter = 'all'; // 'all', 'known', 'learning'
         let currentPage = 1;
         const PER_PAGE = 10;
 
@@ -499,14 +513,17 @@
             loadWords();
         }
 
-        async function setDifficulty(id, diff) {
-            await fetch(`/api/words/${id}/difficulty`, {
+        async function toggleKnown(id) {
+            const w = allWords.find(w => w.id === id);
+            if (!w) return;
+            const newKnown = !w.known;
+            await fetch(`/api/words/${id}/known`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ difficulty: diff })
+                body: JSON.stringify({ known: newKnown })
             });
-            const w = allWords.find(w => w.id === id);
-            if (w) w.difficulty = diff;
+            w.known = newKnown;
+            renderFilters();
             renderWords();
         }
 
@@ -517,28 +534,57 @@
         }
 
         function setFilter(type) { activeFilter = type; currentPage = 1; renderFilters(); renderWords(); }
+        function setKnownFilter(f) { knownFilter = f; currentPage = 1; renderFilters(); renderWords(); }
         function setPage(p) { currentPage = p; renderWords(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
         function renderFilters() {
             const counts = { all: allWords.length };
             allWords.forEach(w => { const t = normalizeType(w.word_type); counts[t] = (counts[t] || 0) + 1; });
+            const knownCount = allWords.filter(w => w.known).length;
+            const learningCount = allWords.length - knownCount;
 
             const types = [['all', 'All', '']].concat(
                 Object.entries(TYPE_META).filter(([k]) => counts[k]).map(([k, m]) => [k, m.label, m.dot])
             );
 
+            const knownSection = `
+                <div class="sidebar-title" style="margin-top:18px">Progress</div>
+                <button class="filter-btn ${knownFilter === 'all' ? 'active' : ''}" onclick="setKnownFilter('all')">
+                    <span class="label-group">All</span><span class="count">${allWords.length}</span>
+                </button>
+                <button class="filter-btn ${knownFilter === 'learning' ? 'active' : ''}" onclick="setKnownFilter('learning')">
+                    <span class="label-group">&#128218; Still learning</span><span class="count">${learningCount}</span>
+                </button>
+                <button class="filter-btn ${knownFilter === 'known' ? 'active' : ''}" onclick="setKnownFilter('known')">
+                    <span class="label-group">&#10003; I know</span><span class="count">${knownCount}</span>
+                </button>`;
+
             sidebar.innerHTML = '<div class="sidebar-title">Filter by type</div>' + types.map(([k, l, d]) => `
                 <button class="filter-btn ${activeFilter === k ? 'active' : ''}" onclick="setFilter('${k}')">
                     <span class="label-group">${d ? `<span class="dot ${d}"></span>` : ''}${l}</span>
                     <span class="count">${counts[k] || 0}</span>
-                </button>`).join('');
+                </button>`).join('') + knownSection;
+
+            const knownPills = `
+                <button class="pill-btn ${knownFilter === 'all' ? 'active' : ''}" onclick="setKnownFilter('all')">All</button>
+                <button class="pill-btn ${knownFilter === 'learning' ? 'active' : ''}" onclick="setKnownFilter('learning')">Learning ${learningCount}</button>
+                <button class="pill-btn ${knownFilter === 'known' ? 'active' : ''}" onclick="setKnownFilter('known')">Known ${knownCount}</button>`;
 
             filterPills.innerHTML = types.map(([k, l]) => `
-                <button class="pill-btn ${activeFilter === k ? 'active' : ''}" onclick="setFilter('${k}')">${l} ${counts[k] || 0}</button>`).join('');
+                <button class="pill-btn ${activeFilter === k ? 'active' : ''}" onclick="setFilter('${k}')">${l} ${counts[k] || 0}</button>`).join('')
+                + '<span style="width:2px;background:var(--border);flex-shrink:0;margin:4px 2px;border-radius:1px"></span>' + knownPills;
+        }
+
+        function getFiltered() {
+            let words = allWords;
+            if (activeFilter !== 'all') words = words.filter(w => normalizeType(w.word_type) === activeFilter);
+            if (knownFilter === 'known') words = words.filter(w => w.known);
+            else if (knownFilter === 'learning') words = words.filter(w => !w.known);
+            return words;
         }
 
         function renderWords() {
-            const filtered = activeFilter === 'all' ? allWords : allWords.filter(w => normalizeType(w.word_type) === activeFilter);
+            const filtered = getFiltered();
             const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
             if (currentPage > totalPages) currentPage = totalPages;
             const start = (currentPage - 1) * PER_PAGE;
@@ -598,11 +644,12 @@
                         ${w.sentence_translation ? `<div class="example-en">${esc(w.sentence_translation)}</div>` : ''}
                     </div>
                     ${notesHtml}
-                    <div class="difficulty-row">
-                        <span class="diff-label">How well do you know this?</span>
-                        <button class="diff-btn ${diff === 'hard' ? 'active-hard' : ''}" onclick="setDifficulty(${w.id}, 'hard')">Hard</button>
-                        <button class="diff-btn ${diff === 'medium' ? 'active-medium' : ''}" onclick="setDifficulty(${w.id}, 'medium')">Medium</button>
-                        <button class="diff-btn ${diff === 'easy' ? 'active-easy' : ''}" onclick="setDifficulty(${w.id}, 'easy')">Easy</button>
+                    <div class="known-row">
+                        ${w.level ? `<span class="level-badge level-${esc(w.level)}">${esc(w.level)}</span>` : ''}
+                        <button class="known-toggle ${w.known ? 'is-known' : ''}" onclick="toggleKnown(${w.id})">
+                            <span class="check">${w.known ? '&#10003;' : '&#9675;'}</span>
+                            ${w.known ? 'I know this' : 'Still learning'}
+                        </button>
                     </div>
                     <div class="ask-row">
                         <button class="ask-toggle" onclick="toggleAsk(${w.id})">&#9889; Ask AI</button>

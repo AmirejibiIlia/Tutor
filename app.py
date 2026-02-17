@@ -52,6 +52,8 @@ def init_db():
             ipa TEXT,
             gender_label TEXT,
             notes TEXT,
+            level TEXT,
+            known BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP NOT NULL
         )
     """)
@@ -66,6 +68,8 @@ def init_db():
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS ipa TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS gender_label TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS notes TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS level TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS known BOOLEAN DEFAULT FALSE",
     ]
     for sql in migrations:
         cur.execute(sql)
@@ -124,11 +128,15 @@ EXAMPLE:
 - example_sentence: one natural, everyday German sentence using the word. Not overly formal.
 - sentence_translation: natural English translation of that sentence.
 
+DIFFICULTY LEVEL:
+- level: classify the word/phrase by CEFR level for German learners. Must be one of: "A1", "A2", "B1", "B2", "C1", "C2".
+  A1 = absolute basics (Hallo, Wasser, ja, nein), A2 = everyday words (Frühstück, arbeiten), B1 = intermediate, B2 = upper intermediate, C1 = advanced, C2 = near-native.
+
 LEARNING NOTES:
 - notes: a short helpful note for learners (irregular plural, special usage, common mistakes, related words, etc.). Keep it to 1-2 sentences. Set to null if nothing noteworthy.
 
 Respond in EXACTLY this JSON format, no extra text:
-{{"english": "flower", "german": "Blume", "word_type": "noun", "gender_article": "die", "gender_label": "f", "plural": "Blumen", "verb_forms": null, "ipa": "/ˈbluːmə/", "example_sentence": "Ich habe ihr Blumen zum Geburtstag geschenkt.", "sentence_translation": "I gave her flowers for her birthday.", "notes": "Regular plural. Also used figuratively: 'die Blume des Lebens' (the flower of life)."}}"""
+{{"english": "flower", "german": "Blume", "word_type": "noun", "gender_article": "die", "gender_label": "f", "plural": "Blumen", "verb_forms": null, "ipa": "/ˈbluːmə/", "level": "A2", "example_sentence": "Ich habe ihr Blumen zum Geburtstag geschenkt.", "sentence_translation": "I gave her flowers for her birthday.", "notes": "Regular plural. Also used figuratively: 'die Blume des Lebens' (the flower of life)."}}"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -314,8 +322,8 @@ def search():
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO words (user_id, english, german, word_type, gender_article, gender_label, plural, verb_forms, example_sentence, sentence_translation, ipa, notes, difficulty, created_at)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+        """INSERT INTO words (user_id, english, german, word_type, gender_article, gender_label, plural, verb_forms, example_sentence, sentence_translation, ipa, notes, level, known, created_at)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
         (
             session["user_id"],
             result["english"],
@@ -329,7 +337,8 @@ def search():
             result.get("sentence_translation"),
             result.get("ipa"),
             result.get("notes"),
-            "new",
+            result.get("level"),
+            False,
             datetime.utcnow(),
         ),
     )
@@ -358,16 +367,14 @@ def get_words():
     return jsonify(rows)
 
 
-@app.route("/api/words/<int:word_id>/difficulty", methods=["PATCH"])
+@app.route("/api/words/<int:word_id>/known", methods=["PATCH"])
 @login_required
-def set_difficulty(word_id):
+def toggle_known(word_id):
     data = request.get_json()
-    difficulty = data.get("difficulty", "new")
-    if difficulty not in ("new", "hard", "medium", "easy"):
-        return jsonify({"error": "Invalid difficulty"}), 400
+    known = bool(data.get("known", False))
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("UPDATE words SET difficulty = %s WHERE id = %s AND user_id = %s", (difficulty, word_id, session["user_id"]))
+    cur.execute("UPDATE words SET known = %s WHERE id = %s AND user_id = %s", (known, word_id, session["user_id"]))
     conn.commit()
     cur.close()
     conn.close()
@@ -401,9 +408,14 @@ def get_stats():
     cur.execute("SELECT COALESCE(word_type, 'other') as word_type, COUNT(*) as count FROM words WHERE user_id = %s GROUP BY word_type ORDER BY count DESC", (uid,))
     by_type = [dict(r) for r in cur.fetchall()]
 
-    # By difficulty
-    cur.execute("SELECT COALESCE(difficulty, 'new') as difficulty, COUNT(*) as count FROM words WHERE user_id = %s GROUP BY difficulty", (uid,))
-    by_difficulty = {r["difficulty"]: r["count"] for r in cur.fetchall()}
+    # Known vs learning
+    cur.execute("SELECT COUNT(*) FILTER (WHERE known = TRUE) as known, COUNT(*) FILTER (WHERE known = FALSE OR known IS NULL) as learning FROM words WHERE user_id = %s", (uid,))
+    known_row = cur.fetchone()
+    known_stats = {"known": known_row["known"], "learning": known_row["learning"]}
+
+    # By level
+    cur.execute("SELECT COALESCE(level, 'unknown') as level, COUNT(*) as count FROM words WHERE user_id = %s GROUP BY level ORDER BY level", (uid,))
+    by_level = [dict(r) for r in cur.fetchall()]
 
     # Words per day (last 30 days)
     cur.execute("""
@@ -453,7 +465,8 @@ def get_stats():
     return jsonify({
         "total": total,
         "by_type": by_type,
-        "by_difficulty": by_difficulty,
+        "known_stats": known_stats,
+        "by_level": by_level,
         "daily": daily,
         "streak": streak,
         "milestones": milestones,

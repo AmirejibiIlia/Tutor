@@ -218,8 +218,12 @@
                 <canvas id="typeChart"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Difficulty Breakdown</h3>
-                <canvas id="diffChart"></canvas>
+                <h3>Known vs Learning</h3>
+                <canvas id="knownChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>CEFR Level Distribution</h3>
+                <canvas id="levelChart"></canvas>
             </div>
             <div class="chart-card full">
                 <h3>Words Added (Last 30 Days)</h3>
@@ -261,11 +265,8 @@
         fetch('/api/stats').then(r => r.json()).then(renderStats);
 
         function renderStats(s) {
-            // Summary cards
-            const easy = s.by_difficulty.easy || 0;
-            const medium = s.by_difficulty.medium || 0;
-            const hard = s.by_difficulty.hard || 0;
-            const newW = s.by_difficulty.new || 0;
+            const known = s.known_stats.known || 0;
+            const learning = s.known_stats.learning || 0;
 
             document.getElementById('summaryGrid').innerHTML = `
                 <div class="summary-card">
@@ -277,29 +278,25 @@
                     <div class="label">Day Streak</div>
                 </div>
                 <div class="summary-card">
-                    <div class="value">${easy}</div>
-                    <div class="label">Mastered</div>
+                    <div class="value">${known}</div>
+                    <div class="label">Words I Know</div>
                 </div>
                 <div class="summary-card">
-                    <div class="value">${hard}</div>
-                    <div class="label">Need Practice</div>
+                    <div class="value">${learning}</div>
+                    <div class="label">Still Learning</div>
                 </div>
             `;
 
-            // Difficulty bar
+            // Known bar
             const total = s.total || 1;
             document.getElementById('diffSection').innerHTML = `
                 <div class="diff-bar">
-                    <div class="segment seg-easy" style="width:${easy/total*100}%"></div>
-                    <div class="segment seg-medium" style="width:${medium/total*100}%"></div>
-                    <div class="segment seg-hard" style="width:${hard/total*100}%"></div>
-                    <div class="segment seg-new" style="width:${newW/total*100}%"></div>
+                    <div class="segment seg-easy" style="width:${known/total*100}%"></div>
+                    <div class="segment seg-new" style="width:${learning/total*100}%"></div>
                 </div>
                 <div class="diff-legend">
-                    <div class="diff-legend-item"><div class="swatch" style="background:#81c784"></div>Easy (${easy})</div>
-                    <div class="diff-legend-item"><div class="swatch" style="background:#ffb74d"></div>Medium (${medium})</div>
-                    <div class="diff-legend-item"><div class="swatch" style="background:#e57373"></div>Hard (${hard})</div>
-                    <div class="diff-legend-item"><div class="swatch" style="background:#bdbdbd"></div>New (${newW})</div>
+                    <div class="diff-legend-item"><div class="swatch" style="background:#81c784"></div>Known (${known})</div>
+                    <div class="diff-legend-item"><div class="swatch" style="background:#bdbdbd"></div>Still learning (${learning})</div>
                 </div>
             `;
 
@@ -322,14 +319,14 @@
                 }
             });
 
-            // Difficulty doughnut
-            new Chart(document.getElementById('diffChart'), {
+            // Known doughnut
+            new Chart(document.getElementById('knownChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Easy', 'Medium', 'Hard', 'New'],
+                    labels: ['Known', 'Still learning'],
                     datasets: [{
-                        data: [easy, medium, hard, newW],
-                        backgroundColor: ['#81c784', '#ffb74d', '#e57373', '#bdbdbd'],
+                        data: [known, learning],
+                        backgroundColor: ['#81c784', '#bdbdbd'],
                         borderWidth: 0
                     }]
                 },
@@ -338,6 +335,25 @@
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 12 } } }
                     }
+                }
+            });
+
+            // Level bar chart
+            const LEVEL_COLORS = { A1: '#2e7d32', A2: '#558b2f', B1: '#f9a825', B2: '#e65100', C1: '#c62828', C2: '#6a1b9a', unknown: '#bdbdbd' };
+            const levelLabels = s.by_level.map(l => l.level);
+            const levelData = s.by_level.map(l => l.count);
+            const levelColors = levelLabels.map(l => LEVEL_COLORS[l] || '#999');
+
+            new Chart(document.getElementById('levelChart'), {
+                type: 'bar',
+                data: {
+                    labels: levelLabels,
+                    datasets: [{ data: levelData, backgroundColor: levelColors, borderRadius: 4 }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { grid: { display: false } } },
+                    plugins: { legend: { display: false } }
                 }
             });
 
