@@ -49,6 +49,17 @@ def init_db():
             created_at TIMESTAMP NOT NULL
         )
     """)
+    # Migrate old table: add columns that may be missing
+    migrations = [
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS word_type TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS gender_article TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS plural TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS verb_forms TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS sentence_translation TEXT",
+    ]
+    for sql in migrations:
+        cur.execute(sql)
     conn.commit()
     cur.close()
     conn.close()
