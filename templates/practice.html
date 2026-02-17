@@ -199,6 +199,65 @@
             font-style: italic;
         }
 
+        /* Quick lookup */
+        .lookup-section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; margin-bottom: 24px; overflow: hidden;
+        }
+        .lookup-bar {
+            padding: 16px 24px; display: flex; gap: 10px; align-items: center;
+        }
+        .lookup-bar input {
+            flex: 1; padding: 11px 16px; font-size: 0.92rem;
+            border: 2px solid var(--border); border-radius: 10px;
+            outline: none; background: #fafaf8; transition: border-color 0.2s;
+        }
+        .lookup-bar input:focus { border-color: var(--primary); background: #fff; }
+        .lookup-bar input::placeholder { color: #ccc; }
+        .lookup-btn {
+            padding: 11px 22px; font-size: 0.88rem; font-weight: 600;
+            background: var(--primary); color: white; border: none;
+            border-radius: 10px; cursor: pointer; transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .lookup-btn:hover { background: var(--primary-dark); }
+        .lookup-btn:disabled { background: #bbb; cursor: not-allowed; }
+        .lookup-result {
+            display: none; padding: 0 24px 18px;
+        }
+        .lookup-card {
+            background: var(--primary-light); border-radius: 10px;
+            padding: 16px 20px; position: relative;
+        }
+        .lookup-card .lk-word {
+            font-family: 'Source Serif 4', Georgia, serif;
+            font-size: 1.15rem; font-weight: 700; color: var(--primary-dark);
+        }
+        .lookup-card .lk-article {
+            font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-right: 4px;
+        }
+        .lookup-card .lk-type {
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--text-muted); margin-left: 8px;
+        }
+        .lookup-card .lk-english {
+            font-size: 0.95rem; color: #555; margin-top: 4px;
+        }
+        .lookup-card .lk-example {
+            font-size: 0.85rem; color: var(--text-light); margin-top: 8px;
+            font-style: italic; line-height: 1.5;
+        }
+        .lookup-card .lk-saved {
+            position: absolute; top: 14px; right: 16px;
+            font-size: 0.75rem; font-weight: 600; color: var(--primary);
+            background: white; padding: 3px 10px; border-radius: 6px;
+        }
+        .lookup-card .lk-level {
+            display: inline-block; font-size: 0.7rem; font-weight: 700;
+            margin-left: 8px; padding: 1px 6px; border-radius: 4px;
+            background: white;
+        }
+
         /* Responsive */
         @media (max-width: 700px) {
             .nav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
@@ -213,6 +272,10 @@
             .table-header { padding: 14px 18px; }
             .word-table th { padding: 8px 14px; }
             .word-table td { padding: 10px 14px; font-size: 0.85rem; }
+            .lookup-bar { padding: 12px 16px; }
+            .lookup-result { padding: 0 16px 14px; }
+            .lookup-card { padding: 14px 16px; }
+            .lookup-card .lk-saved { position: static; display: block; margin-bottom: 6px; }
         }
     </style>
 </head>
@@ -244,6 +307,14 @@
                 <input type="text" id="chatInput" placeholder="Type in German or English..." disabled>
                 <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
             </div>
+        </div>
+
+        <div class="lookup-section">
+            <div class="lookup-bar">
+                <input type="text" id="lookupInput" placeholder="Look up a word...">
+                <button class="lookup-btn" id="lookupBtn" onclick="lookupWord()">Look up</button>
+            </div>
+            <div class="lookup-result" id="lookupResult"></div>
         </div>
 
         <div class="table-section">
@@ -564,6 +635,62 @@
             }
 
             check();
+        }
+
+        // Quick word lookup
+        const lookupInput = document.getElementById('lookupInput');
+        const lookupBtn = document.getElementById('lookupBtn');
+        const lookupResult = document.getElementById('lookupResult');
+
+        lookupInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') lookupWord();
+        });
+
+        async function lookupWord() {
+            const word = lookupInput.value.trim();
+            if (!word) return;
+
+            lookupBtn.disabled = true;
+            lookupBtn.textContent = 'Looking up...';
+            lookupResult.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                const article = data.gender_article ? `<span class="lk-article">${esc(data.gender_article)}</span>` : '';
+                const level = data.level ? `<span class="lk-level level-${esc(data.level)}">${esc(data.level)}</span>` : '';
+                const type = data.word_type ? `<span class="lk-type">${esc(data.word_type)}</span>` : '';
+                const example = data.example_sentence
+                    ? `<div class="lk-example">"${esc(data.example_sentence)}"${data.sentence_translation ? '<br>' + esc(data.sentence_translation) : ''}</div>`
+                    : '';
+
+                lookupResult.innerHTML = `
+                    <div class="lookup-card">
+                        <div class="lk-saved">Saved to dictionary</div>
+                        <div>${article}<span class="lk-word">${esc(data.german)}</span>${type}${level}</div>
+                        <div class="lk-english">${esc(data.english)}</div>
+                        ${example}
+                    </div>
+                `;
+                lookupResult.style.display = 'block';
+                lookupInput.value = '';
+
+                // Add to local list and refresh table
+                allWords.unshift(data);
+                renderTable();
+            } catch (err) {
+                lookupResult.innerHTML = `<div class="lookup-card" style="background:#fdf0ef;"><span style="color:#c0392b;">${esc(err.message)}</span></div>`;
+                lookupResult.style.display = 'block';
+            }
+
+            lookupBtn.disabled = false;
+            lookupBtn.textContent = 'Look up';
         }
 
         function esc(str) {
