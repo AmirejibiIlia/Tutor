@@ -256,6 +256,46 @@ def tts():
     return Response(resp.content, content_type="audio/mpeg")
 
 
+@app.route("/api/ask", methods=["POST"])
+@login_required
+def ask_about_word():
+    data = request.get_json()
+    question = data.get("question", "").strip()
+    context = data.get("context", {})
+
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
+
+    german = context.get("german", "")
+    english = context.get("english", "")
+    word_type = context.get("word_type", "")
+
+    prompt = f"""You are a friendly, knowledgeable German language tutor.
+
+The student is looking at this dictionary entry:
+- German: {german}
+- English: {english}
+- Type: {word_type}
+
+The student asks: "{question}"
+
+Answer helpfully and concisely. Include German examples with English translations when relevant.
+Use this format for examples: "German sentence" — "English translation"
+Keep your answer short (2-5 sentences max) but informative. If they ask for variations (formal, informal, friendly, etc.), provide them clearly."""
+
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=300,
+        )
+        answer = response.choices[0].message.content.strip()
+        return jsonify({"answer": answer})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # --- Words API ---
 
 @app.route("/api/search", methods=["POST"])
