@@ -49,6 +49,9 @@ def init_db():
             example_sentence TEXT NOT NULL,
             sentence_translation TEXT,
             difficulty TEXT DEFAULT 'new',
+            ipa TEXT,
+            gender_label TEXT,
+            notes TEXT,
             created_at TIMESTAMP NOT NULL
         )
     """)
@@ -60,6 +63,9 @@ def init_db():
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS verb_forms TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS sentence_translation TEXT",
         "ALTER TABLE words ADD COLUMN IF NOT EXISTS difficulty TEXT DEFAULT 'new'",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS ipa TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS gender_label TEXT",
+        "ALTER TABLE words ADD COLUMN IF NOT EXISTS notes TEXT",
     ]
     for sql in migrations:
         cur.execute(sql)
@@ -85,28 +91,44 @@ def login_required(f):
 
 
 def translate_word(word):
-    prompt = f"""You are a professional German-English dictionary. You must format entries exactly like a real dictionary.
+    prompt = f"""You are a professional linguist writing for a high-quality German-English learning dictionary.
 
 Given the word: "{word}"
 
-Rules:
-- Detect if it's English or German and translate accordingly.
-- The "german" field must ALWAYS use proper German spelling: nouns are CAPITALIZED (Blume, Hund, Tisch), everything else lowercase.
+You MUST follow these rules strictly:
+
+LANGUAGE ACCURACY:
+- Detect if the input is English or German and translate accordingly.
+- The "german" field must use correct German spelling: nouns CAPITALIZED (Blume, Hund), verbs in lowercase infinitive (gehen, sprechen), everything else lowercase.
+- The "english" field must be natural, idiomatic English — avoid awkward literal translations.
+- If a word has multiple common meanings, use the most common one.
+
+WORD TYPE:
 - word_type must be one of: "noun", "verb", "adjective", "adverb", "preposition", "conjunction", "pronoun", "particle", "interjection", "numeral", "phrase"
-- For NOUNS: always include the article (der/die/das) in gender_article, and the plural form (capitalized, e.g. "Blumen"). The "german" field should be just the noun capitalized (e.g. "Blume" not "blume" or "die Blume").
-- For VERBS: provide Präteritum and Partizip II in verb_forms (e.g. "ging, ist gegangen"). Use the infinitive form in "german" (e.g. "gehen").
-- For all other types: set gender_article, plural, and verb_forms to null.
-- example_sentence: a natural German sentence using the word.
-- sentence_translation: English translation of that sentence.
+
+GRAMMAR DETAILS:
+- For NOUNS: provide gender_article (der/die/das), gender_label (m/f/n), and plural form (capitalized). The "german" field = just the capitalized noun.
+- For VERBS: provide verb_forms as "Präteritum, Partizip II" (e.g. "ging, ist gegangen"). The "german" field = infinitive.
+- For all other types: set gender_article, gender_label, plural, and verb_forms to null.
+
+PRONUNCIATION:
+- ipa: IPA phonetic transcription of the German word (e.g. "/ˈbluːmə/" for Blume). Always include.
+
+EXAMPLE:
+- example_sentence: one natural, everyday German sentence using the word. Not overly formal.
+- sentence_translation: natural English translation of that sentence.
+
+LEARNING NOTES:
+- notes: a short helpful note for learners (irregular plural, special usage, common mistakes, related words, etc.). Keep it to 1-2 sentences. Set to null if nothing noteworthy.
 
 Respond in EXACTLY this JSON format, no extra text:
-{{"english": "flower", "german": "Blume", "word_type": "noun", "gender_article": "die", "plural": "Blumen", "verb_forms": null, "example_sentence": "Die Blumen im Garten blühen wunderschön.", "sentence_translation": "The flowers in the garden bloom beautifully."}}"""
+{{"english": "flower", "german": "Blume", "word_type": "noun", "gender_article": "die", "gender_label": "f", "plural": "Blumen", "verb_forms": null, "ipa": "/ˈbluːmə/", "example_sentence": "Ich habe ihr Blumen zum Geburtstag geschenkt.", "sentence_translation": "I gave her flowers for her birthday.", "notes": "Regular plural. Also used figuratively: 'die Blume des Lebens' (the flower of life)."}}"""
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
-        max_tokens=300,
+        max_tokens=500,
     )
 
     text = response.choices[0].message.content.strip()
@@ -246,18 +268,21 @@ def search():
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        """INSERT INTO words (user_id, english, german, word_type, gender_article, plural, verb_forms, example_sentence, sentence_translation, difficulty, created_at)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+        """INSERT INTO words (user_id, english, german, word_type, gender_article, gender_label, plural, verb_forms, example_sentence, sentence_translation, ipa, notes, difficulty, created_at)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
         (
             session["user_id"],
             result["english"],
             result["german"],
             result.get("word_type"),
             result.get("gender_article"),
+            result.get("gender_label"),
             result.get("plural"),
             result.get("verb_forms"),
             result["example_sentence"],
             result.get("sentence_translation"),
+            result.get("ipa"),
+            result.get("notes"),
             "new",
             datetime.utcnow(),
         ),
