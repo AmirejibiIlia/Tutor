@@ -406,8 +406,10 @@
         }
 
         // Speech recognition via MediaRecorder + Groq Whisper (works on iOS)
-        const SILENCE_THRESHOLD = 12;
-        const SILENCE_DURATION = 1800; // ms of silence after speech to auto-stop
+        const SILENCE_THRESHOLD = 18;   // volume level to count as speech
+        const SILENCE_DURATION = 1800;  // ms of silence after speech to auto-stop
+        const MIN_SPEECH_MS = 400;      // minimum ms of speech to bother transcribing
+        let speechFrames = 0;           // count frames with actual speech
 
         async function toggleMic() {
             const micBtn = document.getElementById('micBtn');
@@ -459,7 +461,12 @@
                     if (audioContext) { audioContext.close(); audioContext = null; }
                     analyser = null;
 
-                    if (audioChunks.length === 0) {
+                    // ~60 frames/sec via requestAnimationFrame, so MIN_SPEECH_MS/16 ≈ frames needed
+                    const minFrames = Math.floor(MIN_SPEECH_MS / 16);
+                    const hadRealSpeech = speechFrames >= minFrames;
+
+                    if (audioChunks.length === 0 || !hadRealSpeech) {
+                        // No real speech detected — don't send to Whisper
                         if (continuousMode) setTimeout(() => startListening(), 300);
                         return;
                     }
@@ -469,7 +476,7 @@
                     const blob = new Blob(audioChunks, { type: actualMime });
 
                     // Skip tiny recordings (just noise)
-                    if (blob.size < 1000) {
+                    if (blob.size < 2000) {
                         if (continuousMode) setTimeout(() => startListening(), 300);
                         return;
                     }
@@ -484,9 +491,20 @@
                     try {
                         const res = await fetch('/api/stt', { method: 'POST', body: formData });
                         const data = await res.json();
-                        if (data.text && data.text.trim()) {
-                            chatInput.value = data.text;
-                            sendMessage(); // will auto-restart mic after AI responds
+                        const text = (data.text || '').trim();
+
+                        // Filter out Whisper hallucinations (common phantom outputs on silence)
+                        const hallucinations = [
+                            'vielen dank', 'danke', 'untertitel', 'untertitelung',
+                            'copyright', 'thank you', 'thanks for watching',
+                            'tschüss', 'bis bald', 'auf wiedersehen',
+                        ];
+                        const lower = text.toLowerCase().replace(/[.!?,]/g, '').trim();
+                        const isHallucination = hallucinations.some(h => lower === h);
+
+                        if (text && !isHallucination) {
+                            chatInput.value = text;
+                            sendMessage();
                         } else if (continuousMode) {
                             setTimeout(() => startListening(), 300);
                         }
@@ -496,6 +514,7 @@
                     }
                 };
 
+                speechFrames = 0;
                 mediaRecorder.start(250);
                 isRecording = true;
                 micBtn.classList.add('recording');
@@ -531,6 +550,7 @@
 
                 if (volume > SILENCE_THRESHOLD) {
                     hasSpeech = true;
+                    speechFrames++;
                     silenceStart = null;
                 } else if (hasSpeech) {
                     if (!silenceStart) silenceStart = Date.now();
