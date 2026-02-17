@@ -240,7 +240,7 @@
                 <div class="chat-empty">Click "New conversation" to start practicing with your vocabulary words.</div>
             </div>
             <div class="chat-input">
-                <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Hold to speak">&#127908;</button>
+                <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Click to start/stop continuous listening">&#127908;</button>
                 <input type="text" id="chatInput" placeholder="Type in German or English..." disabled>
                 <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>Send</button>
             </div>
@@ -261,6 +261,8 @@
         let currentAudio = null;
         let isRecording = false;
         let recognition = null;
+        let continuousMode = false;  // mic stays on between turns
+        let waitingForAI = false;     // pause mic while AI responds + speaks
 
         fetch('/api/me').then(r => r.json()).then(data => {
             if (data.logged_in) document.getElementById('usernameDisplay').textContent = data.username;
@@ -273,10 +275,14 @@
         }
 
         function speak(text) {
-            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-            const url = `/api/tts?text=${encodeURIComponent(text)}&lang=de`;
-            currentAudio = new Audio(url);
-            currentAudio.play();
+            return new Promise(resolve => {
+                if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+                const url = `/api/tts?text=${encodeURIComponent(text)}&lang=de`;
+                currentAudio = new Audio(url);
+                currentAudio.onended = resolve;
+                currentAudio.onerror = resolve;
+                currentAudio.play().catch(resolve);
+            });
         }
 
         // Load words
@@ -359,6 +365,7 @@
 
             sendBtn.disabled = true;
             chatInput.disabled = true;
+            waitingForAI = true;
 
             try {
                 const res = await fetch('/api/chat', {
@@ -376,18 +383,25 @@
                 addMessage('ai', data.reply);
                 chatHistory.push({ role: 'assistant', content: data.reply });
 
-                // Auto-speak AI response
-                speak(data.reply);
+                // Speak AI response and wait for it to finish
+                await speak(data.reply);
             } catch (err) {
                 addMessage('ai', 'Error: ' + err.message);
             }
 
+            waitingForAI = false;
             sendBtn.disabled = false;
             chatInput.disabled = false;
-            chatInput.focus();
+
+            // In continuous mode, auto-restart mic after AI finishes speaking
+            if (continuousMode) {
+                startListening();
+            } else {
+                chatInput.focus();
+            }
         }
 
-        // Speech recognition
+        // Speech recognition — continuous dialogue mode
         function toggleMic() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert('Speech recognition is not supported in this browser. Try Chrome.');
@@ -396,13 +410,24 @@
 
             const micBtn = document.getElementById('micBtn');
 
-            if (isRecording) {
-                recognition.stop();
+            // If already in continuous mode, stop everything
+            if (continuousMode) {
+                continuousMode = false;
+                if (recognition) recognition.abort();
                 isRecording = false;
                 micBtn.classList.remove('recording');
                 return;
             }
 
+            // Enter continuous mode
+            continuousMode = true;
+            startListening();
+        }
+
+        function startListening() {
+            if (!continuousMode || waitingForAI) return;
+
+            const micBtn = document.getElementById('micBtn');
             const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SR();
             recognition.lang = 'de-DE';
@@ -416,18 +441,32 @@
             recognition.onresult = (e) => {
                 const transcript = e.results[0][0].transcript;
                 chatInput.value = transcript;
+                // Mic will auto-restart after AI responds (in sendMessage)
                 sendMessage();
             };
 
             recognition.onend = () => {
                 isRecording = false;
-                micBtn.classList.remove('recording');
+                // If no result and still in continuous mode, restart listening
+                if (continuousMode && !waitingForAI) {
+                    setTimeout(() => startListening(), 300);
+                } else if (!continuousMode) {
+                    micBtn.classList.remove('recording');
+                }
             };
 
             recognition.onerror = (e) => {
                 isRecording = false;
-                micBtn.classList.remove('recording');
-                if (e.error !== 'no-speech') console.error('Speech error:', e.error);
+                if (e.error === 'no-speech' && continuousMode && !waitingForAI) {
+                    // No speech detected, keep trying
+                    setTimeout(() => startListening(), 300);
+                } else if (e.error === 'aborted') {
+                    micBtn.classList.remove('recording');
+                } else {
+                    console.error('Speech error:', e.error);
+                    micBtn.classList.remove('recording');
+                    continuousMode = false;
+                }
             };
 
             recognition.start();
