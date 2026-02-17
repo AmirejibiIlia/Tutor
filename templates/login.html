@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - German Vocab Tutor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .auth-card h1 {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+            color: #1a1a2e;
+        }
+        .auth-card .subtitle {
+            color: #888;
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #4a90d9;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: #4a90d9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .btn:hover { background: #357abd; }
+        .btn:disabled { background: #aaa; cursor: not-allowed; }
+        .error-msg {
+            color: #d32f2f;
+            background: #ffeaea;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .link a {
+            color: #4a90d9;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <h1>Welcome back</h1>
+        <p class="subtitle">Log in to your vocabulary</p>
+        <div class="error-msg" id="error"></div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" autofocus>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password">
+        </div>
+        <button class="btn" id="loginBtn" onclick="doLogin()">Log in</button>
+        <div class="link">Don't have an account? <a href="/register">Register</a></div>
+    </div>
+    <script>
+        document.getElementById('password').addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        async function doLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const error = document.getElementById('error');
+            const btn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                error.textContent = 'Please fill in all fields';
+                error.style.display = 'block';
+                return;
+            }
+
+            error.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                window.location.href = '/';
+            } catch (err) {
+                error.textContent = err.message;
+                error.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Log in';
+            }
+        }
+    </script>
+</body>
+</html>
