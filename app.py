@@ -93,13 +93,19 @@ def login_required(f):
 def translate_word(word):
     prompt = f"""You are a professional linguist writing for a high-quality German-English learning dictionary.
 
-Given the word: "{word}"
+The user typed: "{word}"
 
-You MUST follow these rules strictly:
+CRITICAL — INPUT HANDLING:
+- The user may type a single word, a phrase, or even a full sentence.
+- The input may contain spelling mistakes, grammar errors, or awkward phrasing in EITHER language. DO NOT copy their mistakes.
+- Your job is to understand what the user MEANS, then produce the CORRECT dictionary entry.
+- If the input is a phrase or sentence (e.g. "can I have a water please"), identify the KEY WORD or PHRASE to create an entry for, and use word_type "phrase" if it's a full expression.
+- ALWAYS produce grammatically perfect German and natural idiomatic English, regardless of how the user typed it.
+- Example: if user types "can I have a water, please?" → german should be "Könnte ich bitte ein Wasser haben?" (correct grammar), english should be "Could I have some water, please?" (natural English).
 
 LANGUAGE ACCURACY:
 - Detect if the input is English or German and translate accordingly.
-- The "german" field must use correct German spelling: nouns CAPITALIZED (Blume, Hund), verbs in lowercase infinitive (gehen, sprechen), everything else lowercase.
+- The "german" field must use correct German spelling: nouns CAPITALIZED (Blume, Hund), verbs in lowercase infinitive (gehen, sprechen), everything else lowercase. For phrases, use proper sentence capitalization.
 - The "english" field must be natural, idiomatic English — avoid awkward literal translations.
 - If a word has multiple common meanings, use the most common one.
 
