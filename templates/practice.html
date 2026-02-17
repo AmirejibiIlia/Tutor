@@ -260,9 +260,13 @@
         let chatHistory = [];
         let currentAudio = null;
         let isRecording = false;
-        let recognition = null;
-        let continuousMode = false;  // mic stays on between turns
-        let waitingForAI = false;     // pause mic while AI responds + speaks
+        let continuousMode = false;
+        let waitingForAI = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioContext = null;
+        let analyser = null;
+        let micStream = null;
 
         fetch('/api/me').then(r => r.json()).then(data => {
             if (data.logged_in) document.getElementById('usernameDisplay').textContent = data.username;
@@ -401,75 +405,145 @@
             }
         }
 
-        // Speech recognition — continuous dialogue mode
-        function toggleMic() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert('Speech recognition is not supported in this browser. Try Chrome.');
-                return;
-            }
+        // Speech recognition via MediaRecorder + Groq Whisper (works on iOS)
+        const SILENCE_THRESHOLD = 12;
+        const SILENCE_DURATION = 1800; // ms of silence after speech to auto-stop
 
+        async function toggleMic() {
             const micBtn = document.getElementById('micBtn');
 
-            // If already in continuous mode, stop everything
             if (continuousMode) {
+                // Stop continuous mode
                 continuousMode = false;
-                if (recognition) recognition.abort();
-                isRecording = false;
+                stopRecording();
                 micBtn.classList.remove('recording');
                 return;
             }
 
-            // Enter continuous mode
+            // Start continuous mode
             continuousMode = true;
-            startListening();
+            await startListening();
         }
 
-        function startListening() {
+        async function startListening() {
             if (!continuousMode || waitingForAI) return;
-
             const micBtn = document.getElementById('micBtn');
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SR();
-            recognition.lang = 'de-DE';
-            recognition.interimResults = false;
 
-            recognition.onstart = () => {
+            try {
+                // Get mic stream (re-use if already open)
+                if (!micStream || micStream.getTracks()[0].readyState === 'ended') {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+
+                // Audio analysis for silence detection
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(micStream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512;
+                source.connect(analyser);
+
+                // Pick supported format
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+                    : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+                    : MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+                    : '';
+
+                mediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : {});
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    if (audioContext) { audioContext.close(); audioContext = null; }
+                    analyser = null;
+
+                    if (audioChunks.length === 0) {
+                        if (continuousMode) setTimeout(() => startListening(), 300);
+                        return;
+                    }
+
+                    const actualMime = mediaRecorder.mimeType || 'audio/webm';
+                    const ext = actualMime.includes('mp4') ? 'm4a' : 'webm';
+                    const blob = new Blob(audioChunks, { type: actualMime });
+
+                    // Skip tiny recordings (just noise)
+                    if (blob.size < 1000) {
+                        if (continuousMode) setTimeout(() => startListening(), 300);
+                        return;
+                    }
+
+                    micBtn.classList.remove('recording');
+                    isRecording = false;
+
+                    // Send to server for Whisper transcription
+                    const formData = new FormData();
+                    formData.append('audio', blob, `recording.${ext}`);
+
+                    try {
+                        const res = await fetch('/api/stt', { method: 'POST', body: formData });
+                        const data = await res.json();
+                        if (data.text && data.text.trim()) {
+                            chatInput.value = data.text;
+                            sendMessage(); // will auto-restart mic after AI responds
+                        } else if (continuousMode) {
+                            setTimeout(() => startListening(), 300);
+                        }
+                    } catch (err) {
+                        console.error('STT error:', err);
+                        if (continuousMode) setTimeout(() => startListening(), 500);
+                    }
+                };
+
+                mediaRecorder.start(250);
                 isRecording = true;
                 micBtn.classList.add('recording');
-            };
+                monitorSilence();
 
-            recognition.onresult = (e) => {
-                const transcript = e.results[0][0].transcript;
-                chatInput.value = transcript;
-                // Mic will auto-restart after AI responds (in sendMessage)
-                sendMessage();
-            };
+            } catch (err) {
+                console.error('Mic error:', err);
+                continuousMode = false;
+                micBtn.classList.remove('recording');
+                alert('Could not access microphone. Please allow microphone permission.');
+            }
+        }
 
-            recognition.onend = () => {
-                isRecording = false;
-                // If no result and still in continuous mode, restart listening
-                if (continuousMode && !waitingForAI) {
-                    setTimeout(() => startListening(), 300);
-                } else if (!continuousMode) {
-                    micBtn.classList.remove('recording');
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            isRecording = false;
+        }
+
+        function monitorSilence() {
+            if (!analyser || !isRecording) return;
+
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            let hasSpeech = false;
+            let silenceStart = null;
+
+            function check() {
+                if (!isRecording || !analyser) return;
+
+                analyser.getByteFrequencyData(data);
+                const volume = data.reduce((a, b) => a + b, 0) / data.length;
+
+                if (volume > SILENCE_THRESHOLD) {
+                    hasSpeech = true;
+                    silenceStart = null;
+                } else if (hasSpeech) {
+                    if (!silenceStart) silenceStart = Date.now();
+                    if (Date.now() - silenceStart > SILENCE_DURATION) {
+                        stopRecording();
+                        return;
+                    }
                 }
-            };
 
-            recognition.onerror = (e) => {
-                isRecording = false;
-                if (e.error === 'no-speech' && continuousMode && !waitingForAI) {
-                    // No speech detected, keep trying
-                    setTimeout(() => startListening(), 300);
-                } else if (e.error === 'aborted') {
-                    micBtn.classList.remove('recording');
-                } else {
-                    console.error('Speech error:', e.error);
-                    micBtn.classList.remove('recording');
-                    continuousMode = false;
-                }
-            };
+                requestAnimationFrame(check);
+            }
 
-            recognition.start();
+            check();
         }
 
         function esc(str) {

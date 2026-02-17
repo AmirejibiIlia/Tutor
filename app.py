@@ -270,6 +270,23 @@ def tts():
     return Response(resp.content, content_type="audio/mpeg")
 
 
+@app.route("/api/stt", methods=["POST"])
+@login_required
+def stt():
+    audio = request.files.get("audio")
+    if not audio:
+        return jsonify({"error": "No audio file"}), 400
+    try:
+        transcription = client.audio.transcriptions.create(
+            file=(audio.filename, audio.stream, audio.content_type),
+            model="whisper-large-v3",
+            language="de",
+        )
+        return jsonify({"text": transcription.text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/chat", methods=["POST"])
 @login_required
 def chat():
